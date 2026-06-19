@@ -1,0 +1,6 @@
+newmtl tripo_material_b5bec199_0851_44ef_a115_af7291719f2a
+Kd 1.000000000 1.000000000 1.000000000
+d 1.000000000
+illum 2
+map_Kd street+scene+3d+model_basecolor.jpg
+

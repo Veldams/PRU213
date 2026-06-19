@@ -1,0 +1,6 @@
+newmtl tripo_material_fa5f1c64_e087_4ab8_a37a_f731f1d7a078
+Kd 1.000000000 1.000000000 1.000000000
+d 1.000000000
+illum 2
+map_Kd residential+building+3d+model_basecolor.jpg
+
