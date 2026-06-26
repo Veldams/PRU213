@@ -5,12 +5,17 @@ public class RealMovement : MonoBehaviour
 {
     public float moveSpeed = 4f;
     public float rotationSpeed = 150f;
-    
+    public float animSmoothTime = 0.15f;
+
     private Animator anim;
+    private float animSpeed;
+    private static readonly int SpeedHash = Animator.StringToHash("Speed");
 
     void Start()
     {
         anim = GetComponent<Animator>();
+        if (anim != null)
+            anim.applyRootMotion = false;
     }
 
     void Update()
@@ -26,15 +31,18 @@ public class RealMovement : MonoBehaviour
             if (Keyboard.current.aKey.isPressed || Keyboard.current.leftArrowKey.isPressed) horizontal -= 1f;
         }
 
-        // Di chuyển
-        if (vertical != 0) transform.Translate(Vector3.forward * vertical * moveSpeed * Time.deltaTime);
-        if (horizontal != 0) transform.Rotate(Vector3.up * horizontal * rotationSpeed * Time.deltaTime);
+        if (horizontal != 0f)
+            transform.Rotate(0f, horizontal * rotationSpeed * Time.deltaTime, 0f, Space.World);
 
-        // Gửi lệnh cho Animator để đổi animation từ Đứng Yên sang Chạy
+        if (vertical != 0f)
+            transform.Translate(Vector3.forward * vertical * moveSpeed * Time.deltaTime, Space.Self);
+
         if (anim != null)
         {
-            float speed = Mathf.Abs(vertical) + Mathf.Abs(horizontal);
-            anim.SetFloat("Speed", speed);
+            // Chỉ chạy animation Run khi tiến/lùi (không khi chỉ xoay A/D)
+            float targetSpeed = Mathf.Abs(vertical);
+            animSpeed = Mathf.MoveTowards(animSpeed, targetSpeed, Time.deltaTime / animSmoothTime);
+            anim.SetFloat(SpeedHash, animSpeed);
         }
     }
 }

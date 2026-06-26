@@ -24694,7 +24694,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1987048622}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: 15, y: 0, z: 0}
 --- !u!81 &1828837828
 AudioListener:
   m_ObjectHideFlags: 0
@@ -27224,7 +27224,7 @@ Animator:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1987048619}
   m_Enabled: 1
-  m_Avatar: {fileID: 0}
+  m_Avatar: {fileID: 9000000, guid: 8e276040c0eb5dc4eb475b74482c39af, type: 3}
   m_Controller: {fileID: 9100000, guid: 827be62dad13a824489ad3b7cb982527, type: 2}
   m_CullingMode: 0
   m_UpdateMode: 0
