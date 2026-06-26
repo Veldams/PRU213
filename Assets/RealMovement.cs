@@ -10,12 +10,14 @@ public class RealMovement : MonoBehaviour
     private Animator anim;
     private float animSpeed;
     private static readonly int SpeedHash = Animator.StringToHash("Speed");
+    private CharacterController characterController;
 
     void Start()
     {
         anim = GetComponent<Animator>();
         if (anim != null)
             anim.applyRootMotion = false;
+        characterController = GetComponent<CharacterController>();
     }
 
     void Update()
@@ -31,11 +33,21 @@ public class RealMovement : MonoBehaviour
             if (Keyboard.current.aKey.isPressed || Keyboard.current.leftArrowKey.isPressed) horizontal -= 1f;
         }
 
+        // Di chuyển: ưu tiên CharacterController để va chạm (lan can/collider) hoạt động chính xác.
+        if (vertical != 0)
+        {
+            Vector3 move = transform.forward * vertical * moveSpeed * Time.deltaTime;
+            if (characterController != null)
+            {
+                characterController.Move(move);
+            }
+            else
+            {
+                transform.Translate(Vector3.forward * vertical * moveSpeed * Time.deltaTime);
+            }
+        }
         if (horizontal != 0f)
             transform.Rotate(0f, horizontal * rotationSpeed * Time.deltaTime, 0f, Space.World);
-
-        if (vertical != 0f)
-            transform.Translate(Vector3.forward * vertical * moveSpeed * Time.deltaTime, Space.Self);
 
         if (anim != null)
         {

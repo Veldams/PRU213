@@ -1,0 +1,16 @@
+# Blender 5.0.1 MTL File: 'None'
+# www.blender.org
+
+newmtl tripo_mat_4af7160d-b155-4df9-9afc-9f6cba929dda
+Ka 1.000000 1.000000 1.000000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.500000
+d 1.000000
+illum 2
+map_Kd government_building_3d_model_basecolor.JPEG
+map_Ns government_building_3d_model_roughness.JPEG
+map_Pr government_building_3d_model_roughness.JPEG
+map_refl government_building_3d_model_metallic.JPEG
+map_Pm government_building_3d_model_metallic.JPEG
+map_Bump -bm 1.000000 government_building_3d_model_normal.JPEG

@@ -11,6 +11,7 @@ public class ProceduralMovement : MonoBehaviour
     
     private float walkTime = 0f;
     private Transform visualMesh;      // Khối 3D hiển thị bên trong
+    private CharacterController characterController;
 
     void Start()
     {
@@ -27,6 +28,8 @@ public class ProceduralMovement : MonoBehaviour
         {
             visualMesh = transform; // Fallback
         }
+
+        characterController = GetComponent<CharacterController>();
     }
 
     void LateUpdate()
@@ -44,7 +47,18 @@ public class ProceduralMovement : MonoBehaviour
         }
 
         // 2. DI CHUYỂN TOÀN BỘ CƠ THỂ
-        if (vertical != 0) transform.Translate(Vector3.forward * vertical * moveSpeed * Time.deltaTime);
+        if (vertical != 0)
+        {
+            Vector3 move = transform.forward * vertical * moveSpeed * Time.deltaTime;
+            if (characterController != null)
+            {
+                characterController.Move(move);
+            }
+            else
+            {
+                transform.Translate(Vector3.forward * vertical * moveSpeed * Time.deltaTime);
+            }
+        }
         if (horizontal != 0) transform.Rotate(Vector3.up * horizontal * rotationSpeed * Time.deltaTime);
 
         // 3. TẠO CỬ ĐỘNG BƯỚC ĐI CHO MODEL KHÔNG CÓ XƯƠNG (Wobble & Bounce)
