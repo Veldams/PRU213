@@ -7467,6 +7467,37 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 1, y: 1, z: 1}
   m_Center: {x: 0, y: 0, z: 0}
+--- !u!1 &402006972
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 402006973}
+  m_Layer: 0
+  m_Name: DefaultPlayerSpawn
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &402006973
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 402006972}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0.7071068, z: 0, w: 0.7071068}
+  m_LocalPosition: {x: 115.26, y: 0.1, z: 180.39}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &405455089
 GameObject:
   m_ObjectHideFlags: 0
@@ -7836,6 +7867,37 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 7729455510862819801, guid: 8506777e063fe444baef9e981b95678a, type: 3}
   m_PrefabInstance: {fileID: 539660023}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &436867453
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 436867454}
+  m_Layer: 0
+  m_Name: SampleDoorSpawn
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &436867454
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 436867453}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0.6463749, z: 0, w: 0.76302}
+  m_LocalPosition: {x: 205, y: 0.1, z: 180}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &464279426
 GameObject:
   m_ObjectHideFlags: 0
@@ -23128,7 +23190,26 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 4241033612102746059, guid: 143204bb384c4d348ba1889e7c96cc2f, type: 3}
   m_PrefabInstance: {fileID: 4132865078434157677}
   m_PrefabAsset: {fileID: 0}
---- !u!65 &1267824688
+--- !u!114 &1267824691
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1267824686}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8f6bb98b536e80f4194c26c4f960d9fc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SceneTransitionOnTrigger
+  targetSceneName: Police_Reception_Office_Day
+  playerObjectName: 
+  oneTimeOnly: 0
+  keepPlayerAcrossScenes: 1
+  spawnPointNameInTargetScene: ReceptionDoorSpawn
+  debugLogs: 1
+  armDelayAfterLoad: 2
+--- !u!65 &1267824692
 BoxCollider:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -23143,33 +23224,12 @@ BoxCollider:
     serializedVersion: 2
     m_Bits: 0
   m_LayerOverridePriority: 0
-  m_IsTrigger: 0
+  m_IsTrigger: 1
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 1, y: 1, z: 1}
-  m_Center: {x: 0, y: 0, z: 0}
---- !u!65 &1267824689
-BoxCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1267824686}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Size: {x: 1, y: 1, z: 1}
-  m_Center: {x: 0, y: 0, z: 0}
+  m_Size: {x: 4, y: 3, z: 14}
+  m_Center: {x: -21.15, y: -39.4, z: 0.3}
 --- !u!1 &1277094671
 GameObject:
   m_ObjectHideFlags: 0
@@ -40943,6 +41003,7 @@ GameObject:
   - component: {fileID: 1987048621}
   - component: {fileID: 1987048620}
   - component: {fileID: 1987048625}
+  - component: {fileID: 919132148740777299}
   m_Layer: 0
   m_Name: Unarmed Idle 01
   m_TagString: MainCamera
@@ -40950,6 +41011,31 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
+--- !u!114 &919132148740777299
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 919132148740777298}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1828de7e9a757d2468ec5911227dad4c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerViewSwitcher
+  playerCamera: {fileID: 1828837829}
+  toggleViewKey: 36
+  startInFirstPerson: 0
+  firstPersonLocalOffset: {x: 0, y: 2.2, z: 0.05}
+  thirdPersonFocusOffset: {x: 0, y: 1.8, z: 0}
+  thirdPersonLocalOffset: {x: 0.35, y: 1.8, z: -4.2}
+  thirdPersonFov: 85
+  thirdPersonSmooth: 12
+  cameraCollisionRadius: 0.25
+  minDistanceWhenBlocked: 1
+  collisionMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
 --- !u!4 &1031632034626422197
 Transform:
   m_ObjectHideFlags: 0
@@ -41755,10 +41841,10 @@ PrefabInstance:
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 4241033612102746059, guid: 143204bb384c4d348ba1889e7c96cc2f, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 1267824689}
+      addedObject: {fileID: 1267824691}
     - targetCorrespondingSourceObject: {fileID: 4241033612102746059, guid: 143204bb384c4d348ba1889e7c96cc2f, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 1267824688}
+      addedObject: {fileID: 1267824692}
   m_SourcePrefab: {fileID: 100100000, guid: 143204bb384c4d348ba1889e7c96cc2f, type: 3}
 --- !u!1 &4237274457875028650
 GameObject:
@@ -43028,3 +43114,5 @@ SceneRoots:
   - {fileID: 1638191325}
   - {fileID: 2121627046}
   - {fileID: 1403098894}
+  - {fileID: 436867454}
+  - {fileID: 402006973}
