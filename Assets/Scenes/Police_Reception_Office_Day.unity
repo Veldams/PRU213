@@ -3383,6 +3383,103 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 865044172}
   m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!1001 &896865964
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: -8679921383154817045, guid: c0b770dabaee58d45848d0a28ca9eecb, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 2.9625432
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: c0b770dabaee58d45848d0a28ca9eecb, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 2.9625432
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: c0b770dabaee58d45848d0a28ca9eecb, type: 3}
+      propertyPath: m_LocalScale.z
+      value: 2.9625432
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: c0b770dabaee58d45848d0a28ca9eecb, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -5.28
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: c0b770dabaee58d45848d0a28ca9eecb, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 1.465
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: c0b770dabaee58d45848d0a28ca9eecb, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 8.09
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: c0b770dabaee58d45848d0a28ca9eecb, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 0.77805424
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: c0b770dabaee58d45848d0a28ca9eecb, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: c0b770dabaee58d45848d0a28ca9eecb, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: -0.6281972
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: c0b770dabaee58d45848d0a28ca9eecb, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: c0b770dabaee58d45848d0a28ca9eecb, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: c0b770dabaee58d45848d0a28ca9eecb, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: -77.834
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: c0b770dabaee58d45848d0a28ca9eecb, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: c0b770dabaee58d45848d0a28ca9eecb, type: 3}
+      propertyPath: m_Name
+      value: DoiTruong
+      objectReference: {fileID: 0}
+    - target: {fileID: 5866666021909216657, guid: c0b770dabaee58d45848d0a28ca9eecb, type: 3}
+      propertyPath: m_Controller
+      value: 
+      objectReference: {fileID: 9100000, guid: 0ddecc9dd7cd89b48b633c85e74c6179, type: 2}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: c0b770dabaee58d45848d0a28ca9eecb, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 896865966}
+  m_SourcePrefab: {fileID: 100100000, guid: c0b770dabaee58d45848d0a28ca9eecb, type: 3}
+--- !u!1 &896865965 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: c0b770dabaee58d45848d0a28ca9eecb, type: 3}
+  m_PrefabInstance: {fileID: 896865964}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &896865966
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 896865965}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8661fcf9709d1584796129e68a8e0eaf, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::NpcTalkTrigger
+  firstPromptMessage: "E: Tr\xF2 chuy\u1EC7n"
+  followUpPromptMessage: "E: Tr\xF2 chuy\u1EC7n ti\u1EBFp"
+  interactionRadius: 2.5
+  videoSceneName: VideoDialogueScene
 --- !u!1 &904919199
 GameObject:
   m_ObjectHideFlags: 0
@@ -8453,3 +8550,4 @@ SceneRoots:
   - {fileID: 686224503}
   - {fileID: 1971047447}
   - {fileID: 382605260}
+  - {fileID: 896865964}
