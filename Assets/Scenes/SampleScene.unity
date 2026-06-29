@@ -11308,27 +11308,27 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: 8e276040c0eb5dc4eb475b74482c39af, type: 3}
       propertyPath: m_LocalScale.x
-      value: 1.813335
+      value: 4.1383386
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 8e276040c0eb5dc4eb475b74482c39af, type: 3}
       propertyPath: m_LocalScale.y
-      value: 1.813335
+      value: 4.1383386
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 8e276040c0eb5dc4eb475b74482c39af, type: 3}
       propertyPath: m_LocalScale.z
-      value: 1.813335
+      value: 4.1383386
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 8e276040c0eb5dc4eb475b74482c39af, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -30
+      value: 82
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 8e276040c0eb5dc4eb475b74482c39af, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0
+      value: 0.19484
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 8e276040c0eb5dc4eb475b74482c39af, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 20
+      value: 181.81
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 8e276040c0eb5dc4eb475b74482c39af, type: 3}
       propertyPath: m_LocalRotation.w
@@ -11373,6 +11373,26 @@ PrefabInstance:
     - target: {fileID: 919132149155446097, guid: 8e276040c0eb5dc4eb475b74482c39af, type: 3}
       propertyPath: m_TagString
       value: MainCamera
+      objectReference: {fileID: 0}
+    - target: {fileID: 6449345636997588542, guid: 8e276040c0eb5dc4eb475b74482c39af, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 6.7938004
+      objectReference: {fileID: 0}
+    - target: {fileID: 6449345636997588542, guid: 8e276040c0eb5dc4eb475b74482c39af, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 6
+      objectReference: {fileID: 0}
+    - target: {fileID: 6449345636997588542, guid: 8e276040c0eb5dc4eb475b74482c39af, type: 3}
+      propertyPath: m_LocalScale.z
+      value: 6
+      objectReference: {fileID: 0}
+    - target: {fileID: 6449345636997588542, guid: 8e276040c0eb5dc4eb475b74482c39af, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 5.291
+      objectReference: {fileID: 0}
+    - target: {fileID: 6449345636997588542, guid: 8e276040c0eb5dc4eb475b74482c39af, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0.339
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -28379,7 +28399,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 72162f5e6d8de8947ac8f2f79e80ca79, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::RealMovement
-  moveSpeed: 4
+  moveSpeed: 6
   rotationSpeed: 150
   animSmoothTime: 0.15
 --- !u!95 &1987048621
@@ -33003,6 +33023,53 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 8a8b1717677a9464bbed293702695a31, type: 3}
+--- !u!1 &51000100
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 51000101}
+  - component: {fileID: 51000102}
+  m_Layer: 0
+  m_Name: BuildingEntranceTrigger
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &51000101
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 51000100}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 232.15, y: 0.5, z: 183.2}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &51000102
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 51000100}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1672855333706db419a1073216f44bd2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SceneEnterTrigger
+  targetSceneName: Police_Reception_Office_Day
+  promptMessage: "E: \u0110i v\u00e0o"
+  interactionRadius: 18
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
@@ -33029,3 +33096,4 @@ SceneRoots:
   - {fileID: 2120581816837601735}
   - {fileID: 1638191325}
   - {fileID: 2121627046}
+  - {fileID: 51000101}

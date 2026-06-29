@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
@@ -17,16 +18,48 @@ public class MainMenuManager : MonoBehaviour
     private float musicVolume = 1f;
     private float sfxVolume = 1f;
 
+    void Awake()
+    {
+        EnsureUiInputModule();
+        LoadVolumePrefs();
+        StartBackgroundMusic();
+    }
+
     void Start()
     {
-        musicVolume = PlayerPrefs.GetFloat("MusicVolume", 0.8f);
-        sfxVolume   = PlayerPrefs.GetFloat("SFXVolume",   1.0f);
-
-        ApplyMusicVolume();
         UpdateVolumeDisplays();
 
         if (settingsPanel != null)
             settingsPanel.SetActive(false);
+    }
+
+    void EnsureUiInputModule()
+    {
+        var eventSystem = GetComponent<EventSystem>();
+        if (eventSystem == null)
+            return;
+
+        var standaloneModule = GetComponent<StandaloneInputModule>();
+        if (standaloneModule == null)
+            standaloneModule = gameObject.AddComponent<StandaloneInputModule>();
+
+        standaloneModule.enabled = true;
+    }
+
+    void LoadVolumePrefs()
+    {
+        musicVolume = PlayerPrefs.GetFloat("MusicVolume", 0.8f);
+        sfxVolume = PlayerPrefs.GetFloat("SFXVolume", 1.0f);
+    }
+
+    void StartBackgroundMusic()
+    {
+        if (backgroundMusic == null)
+            return;
+
+        backgroundMusic.loop = true;
+        backgroundMusic.playOnAwake = true;
+        ApplyMusicVolume();
     }
 
     // ── Main buttons ──────────────────────────────────────────────────────────
@@ -92,8 +125,13 @@ public class MainMenuManager : MonoBehaviour
     // ── Helpers ───────────────────────────────────────────────────────────────
     private void ApplyMusicVolume()
     {
-        if (backgroundMusic != null)
-            backgroundMusic.volume = musicVolume;
+        if (backgroundMusic == null)
+            return;
+
+        backgroundMusic.volume = musicVolume;
+
+        if (backgroundMusic.clip != null && !backgroundMusic.isPlaying)
+            backgroundMusic.Play();
     }
 
     private void UpdateVolumeDisplays()
