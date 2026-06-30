@@ -82,6 +82,7 @@ public class PlayerSceneTransition : MonoBehaviour
         switch (scene.name)
         {
             case "VideoDialogueScene":
+            case AudioTuningRequest.MiniGameSceneName:
                 playerRoot.SetActive(false);
                 DisablePlayerAudioListeners();
                 break;

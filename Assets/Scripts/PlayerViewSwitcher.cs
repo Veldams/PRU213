@@ -9,7 +9,7 @@ public class PlayerViewSwitcher : MonoBehaviour
     [SerializeField] private bool startInFirstPerson = false;
 
     [Header("First Person")]
-    [SerializeField] private Vector3 firstPersonLocalOffset = new Vector3(0f, 1.35f, 0.05f);
+    [SerializeField] private Vector3 firstPersonLocalOffset = new Vector3(0f, 1.2f, 0.05f);
 
     [Header("Third Person")]
     [SerializeField] private Vector3 thirdPersonFocusOffset = new Vector3(0f, 1.7f, 0f);

@@ -1,0 +1,16 @@
+# Blender 5.0.1 MTL File: 'None'
+# www.blender.org
+
+newmtl tripo_mat_cac2e472-cd38-4f25-9dce-93f90e2f91b1
+Ka 1.000000 1.000000 1.000000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.500000
+d 1.000000
+illum 2
+map_Kd abandoned_brick_building_3d_model_basecolor.JPEG
+map_Ns abandoned_brick_building_3d_model_roughness.JPEG
+map_Pr abandoned_brick_building_3d_model_roughness.JPEG
+map_refl abandoned_brick_building_3d_model_metallic.JPEG
+map_Pm abandoned_brick_building_3d_model_metallic.JPEG
+map_Bump -bm 1.000000 abandoned_brick_building_3d_model_normal.JPEG
