@@ -41095,7 +41095,7 @@ MonoBehaviour:
   playerCamera: {fileID: 1828837829}
   toggleViewKey: 36
   startInFirstPerson: 0
-  firstPersonLocalOffset: {x: 0, y: 1.9000001, z: 0.05}
+  firstPersonLocalOffset: {x: 0, y: 1.2, z: 0.05}
   thirdPersonFocusOffset: {x: 0, y: 1.8, z: 0}
   thirdPersonLocalOffset: {x: 0.35, y: 1.8, z: -4.2}
   thirdPersonFov: 85
