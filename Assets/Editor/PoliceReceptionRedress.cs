@@ -5,7 +5,7 @@ using UnityEngine.SceneManagement;
 
 /// <summary>
 /// Redresses the ReceptionArea inside Police_Reception_Office_Day to match the reference photo:
-/// dark wood paneling, central police emblem, gold slogan, two red poster panels and a
+/// bright white paneling, central police emblem, gold slogan, two red poster panels and a
 /// long wooden counter with monitor / TIEP DAN sign / pen holder / folders / plant.
 /// Keeps Door, spawn points and any player object untouched.
 /// </summary>
@@ -51,10 +51,10 @@ public static class PoliceReceptionRedress
 
         RemoveOldVisuals(area.transform);
 
-        // Wall panel (dark wood, full reception backdrop)
+        // Bright wall panel (full reception backdrop)
         var bgWall = CreateBox(area.transform, "BackdropWoodLight", new Vector3(7.4f, 2.85f, 0.06f), new Vector3(0f, 1.43f, -4.83f), _mahoganyPanel);
-        // Central darker wood panel where emblem and slogan sit
-        CreateBox(area.transform, "CentralPanel", new Vector3(5.4f, 2.55f, 0.04f), new Vector3(0f, 1.43f, -4.80f), _deskWood);
+        // Central white panel where emblem and slogan sit
+        CreateBox(area.transform, "CentralPanel", new Vector3(5.4f, 2.55f, 0.04f), new Vector3(0f, 1.43f, -4.80f), _mahoganyPanel);
 
         // Police emblem (approximation: gold ring + red disc + gold star)
         var emblemRing = CreateCylinder(area.transform, "Emblem_Ring", new Vector3(0.95f, 0.025f, 0.95f), new Vector3(0f, 2.05f, -4.78f), Quaternion.Euler(90f, 0f, 0f), _gold);
@@ -173,7 +173,7 @@ public static class PoliceReceptionRedress
         if (!AssetDatabase.IsValidFolder(MatFolder))
             AssetDatabase.CreateFolder("Assets/Materials", "PoliceReceptionOffice");
 
-        _mahoganyPanel = MakeMat("MahoganyPanel", new Color(0.22f, 0.11f, 0.06f), 0.30f, 0f, Color.black);
+        _mahoganyPanel = MakeMat("BrightWhiteWall", new Color(0.96f, 0.95f, 0.91f), 0.18f, 0f, Color.black);
         _deskWood = MakeMat("DeskWood", new Color(0.36f, 0.20f, 0.10f), 0.40f, 0f, Color.black);
         _deskTop = MakeMat("DeskTopWood", new Color(0.45f, 0.26f, 0.13f), 0.55f, 0f, Color.black);
         _gold = MakeMat("Gold", new Color(0.96f, 0.78f, 0.30f), 0.80f, 0.85f, new Color(0.20f, 0.15f, 0.04f));
