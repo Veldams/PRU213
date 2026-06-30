@@ -83,8 +83,7 @@ public class InteractionPromptUI : MonoBehaviour
         textRect.offsetMax = Vector2.zero;
 
         promptText = textGo.AddComponent<Text>();
-        promptText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf")
-            ?? Resources.GetBuiltinResource<Font>("Arial.ttf");
+        promptText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
         promptText.fontSize = 32;
         promptText.fontStyle = FontStyle.Bold;
         promptText.supportRichText = false;
