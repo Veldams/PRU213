@@ -66,3 +66,6 @@ crashlytics-build.properties
 
 # Packed tutorial avatars
 *.ppmd
+
+# Unity auto recovery scenes
+/[Aa]ssets/_Recovery/

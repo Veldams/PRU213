@@ -157,7 +157,7 @@ public class PlayerSceneTransition : MonoBehaviour
     {
         playerRoot.transform.localScale = savedScale;
 
-        var entrance = FindFirstObjectByType<SceneEnterTrigger>();
+        var entrance = FindAnyObjectByType<SceneEnterTrigger>();
         if (entrance != null)
             playerRoot.transform.position = entrance.transform.position + Vector3.back * 4f;
 
@@ -176,7 +176,7 @@ public class PlayerSceneTransition : MonoBehaviour
         if (rig != null)
             rig.SetActive(false);
 
-        foreach (var cam in FindObjectsByType<Camera>(FindObjectsSortMode.None))
+        foreach (var cam in FindObjectsByType<Camera>())
         {
             if (cam.transform.IsChildOf(playerRoot.transform))
                 continue;

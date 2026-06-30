@@ -58,7 +58,7 @@ public class AudioTuningMiniGameController : MonoBehaviour
         if (Camera.main != null)
             selected = Camera.main.GetComponent<AudioListener>() ?? Camera.main.gameObject.AddComponent<AudioListener>();
 
-        var listeners = FindObjectsByType<AudioListener>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        var listeners = FindObjectsByType<AudioListener>(FindObjectsInactive.Include);
         for (int i = 0; i < listeners.Length; i++)
             listeners[i].enabled = listeners[i] == selected;
     }
@@ -71,9 +71,11 @@ public class AudioTuningMiniGameController : MonoBehaviour
 
         Material MakeMat(Color c)
         {
-            var m = new Material(Shader.Find("Universal Render Pipeline/Lit"));
-            m.color = c;
-            return m;
+            var shader = Shader.Find("Universal Render Pipeline/Lit");
+            if (shader == null)
+                shader = Shader.Find("Standard");
+
+            return new Material(shader) { color = c };
         }
 
         var floor = GameObject.CreatePrimitive(PrimitiveType.Cube);

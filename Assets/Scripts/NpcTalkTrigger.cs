@@ -16,7 +16,7 @@ public class NpcTalkTrigger : MonoBehaviour
     private void Update()
     {
         if (player == null)
-            player = FindFirstObjectByType<RealMovement>();
+            player = FindAnyObjectByType<RealMovement>();
 
         if (player == null)
             return;

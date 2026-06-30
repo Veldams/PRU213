@@ -14,7 +14,7 @@ public class AudioTuningTrigger : MonoBehaviour
     private void Update()
     {
         if (player == null)
-            player = FindFirstObjectByType<RealMovement>();
+            player = FindAnyObjectByType<RealMovement>();
 
         if (player == null)
             return;

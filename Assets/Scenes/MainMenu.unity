@@ -312,7 +312,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b8c4e2f1a9d6437e8f5b2c1d0e3a4f56, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MainMenuBackgroundFit
-  widthCoverage: 0.82
+  widthCoverage: 0.85
   backdropColor: {r: 0.04, g: 0.05, b: 0.07, a: 1}
 --- !u!1 &40000
 GameObject:
