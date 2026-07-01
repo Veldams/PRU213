@@ -13,12 +13,14 @@ public class ObjectiveGuideUI : MonoBehaviour
     private const string SampleSceneName = "SampleScene";
 
     [SerializeField] private string objectiveTitle = "NHIỆM VỤ";
-    [SerializeField] private string objectiveMessage = "Hãy đi đến công sở công an trên con đường";
+    [SerializeField] private string objectiveMessage = "Hãy đi đến công sở công an";
     [SerializeField] private string worldMarkerLabel = "CÔNG AN";
     [SerializeField] private float showDelay = 8.5f;
     [SerializeField] private float fadeInDuration = 0.4f;
     [SerializeField] private float fadeOutDuration = 0.6f;
     [SerializeField] private float completeDistance = 6f;
+
+    private static ObjectiveGuideUI activeInstance;
 
     private Transform target;
     private Collider targetTrigger;
@@ -31,28 +33,70 @@ public class ObjectiveGuideUI : MonoBehaviour
     private ObjectiveWorldMarker worldMarker;
     private bool isVisible;
     private bool isCompleted;
+    private float nextHudRefresh;
 
-    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
-    private static void BootstrapInSampleScene()
+    public static void TryCreateForScene(Scene scene)
     {
-        if (SceneManager.GetActiveScene().name != SampleSceneName)
+        if (scene.name != SampleSceneName)
             return;
 
-        if (FindFirstObjectByType<ObjectiveGuideUI>() != null)
+        if (SampleSceneGuideState.PoliceObjectiveCompleted)
+            return;
+
+        if (activeInstance != null)
             return;
 
         var root = new GameObject("ObjectiveGuideUI");
         root.AddComponent<ObjectiveGuideUI>();
     }
 
+    public static void NotifyPoliceEntered()
+    {
+        SampleSceneGuideState.PoliceObjectiveCompleted = true;
+    }
+
+    private void Awake()
+    {
+        activeInstance = this;
+    }
+
+    private void OnDestroy()
+    {
+        if (activeInstance == this)
+            activeInstance = null;
+    }
+
     private void Start()
     {
-        ResolveTarget();
-        if (target != null)
-            worldMarker = ObjectiveWorldMarker.Create(transform, GetObjectivePoint(), worldMarkerLabel);
-
         BuildUi();
-        StartCoroutine(ShowAfterDelay());
+        StartCoroutine(InitializeRoutine());
+    }
+
+    private IEnumerator InitializeRoutine()
+    {
+        yield return null;
+
+        yield return SceneObjectLocator.FindInSceneAsync(
+            SceneManager.GetActiveScene(),
+            TargetObjectName,
+            go =>
+            {
+                if (go == null)
+                {
+                    Debug.LogWarning("[ObjectiveGuideUI] Target not found: " + TargetObjectName);
+                    return;
+                }
+
+                target = go.transform;
+                targetTrigger = go.GetComponent<Collider>();
+                if (target != null)
+                    worldMarker = ObjectiveWorldMarker.Create(transform, GetObjectivePoint(), worldMarkerLabel);
+            });
+
+        if (target == null)
+            yield break;
+
+        yield return ShowAfterDelay();
     }
 
     private void Update()
@@ -67,6 +111,7 @@ public class ObjectiveGuideUI : MonoBehaviour
         if (HasReachedObjective())
         {
             isCompleted = true;
+            SampleSceneGuideState.PoliceObjectiveCompleted = true;
             StartCoroutine(HideAndDestroy());
             return;
         }
@@ -74,20 +119,11 @@ public class ObjectiveGuideUI : MonoBehaviour
         if (!isVisible)
             return;
 
-        UpdateDistanceAndArrow();
-    }
-
-    private void ResolveTarget()
-    {
-        var go = GameObject.Find(TargetObjectName);
-        if (go == null)
-        {
-            Debug.LogWarning("[ObjectiveGuideUI] Target not found: " + TargetObjectName);
+        if (Time.time < nextHudRefresh)
             return;
-        }
 
-        target = go.transform;
-        targetTrigger = go.GetComponent<Collider>();
+        nextHudRefresh = Time.time + 0.12f;
+        UpdateDistanceAndArrow();
     }
 
     private void ResolvePlayer()
@@ -95,9 +131,9 @@ public class ObjectiveGuideUI : MonoBehaviour
         if (player != null)
             return;
 
-        var movement = FindFirstObjectByType<RealMovement>();
-        if (movement != null)
-            player = movement.transform;
+        var movementTransform = PlayerSceneTransition.FindPlayerTransform();
+        if (movementTransform != null)
+            player = movementTransform;
     }
 
     private Vector3 GetObjectivePoint()
@@ -286,7 +322,7 @@ public class ObjectiveGuideUI : MonoBehaviour
         if (distanceText != null)
             distanceText.text = "Khoảng cách: " + Mathf.RoundToInt(distance) + " m";
 
-        var cam = Camera.main;
+        var cam = PlayerSceneTransition.GetActiveCamera();
         if (cam == null || arrowRect == null)
             return;
 

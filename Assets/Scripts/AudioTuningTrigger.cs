@@ -1,6 +1,5 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
-using UnityEngine.SceneManagement;
 
 public class AudioTuningTrigger : MonoBehaviour
 {
@@ -10,15 +9,25 @@ public class AudioTuningTrigger : MonoBehaviour
 
     private RealMovement player;
     private bool isInRange;
+    private float nextCheckTime;
 
     private void Update()
     {
         if (player == null)
-            player = FindAnyObjectByType<RealMovement>();
+            player = PlayerSceneTransition.FindPlayerMovement();
 
-        if (player == null)
+        if (ProximityUtil.ShouldRun(ref nextCheckTime) && player != null)
+            UpdateProximityState();
+
+        if (!isInRange || Keyboard.current == null)
             return;
 
+        if (Keyboard.current.eKey.wasPressedThisFrame)
+            StartMiniGame();
+    }
+
+    private void UpdateProximityState()
+    {
         float distance = Vector3.Distance(transform.position, player.transform.position);
         bool nextInRange = distance <= interactionRadius;
 
@@ -30,12 +39,6 @@ public class AudioTuningTrigger : MonoBehaviour
             else
                 InteractionPromptUI.Hide();
         }
-
-        if (!isInRange || Keyboard.current == null)
-            return;
-
-        if (Keyboard.current.eKey.wasPressedThisFrame)
-            StartMiniGame();
     }
 
     private void StartMiniGame()
@@ -54,10 +57,10 @@ public class AudioTuningTrigger : MonoBehaviour
             return;
         }
 
-        AudioTuningRequest.ReturnSceneName = SceneManager.GetActiveScene().name;
+        AudioTuningRequest.ReturnSceneName = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
         AudioTuningRequest.HasCompletedMiniGame = false;
-        PlayerSceneTransition.PreservePlayerForSceneChange(player);
-        SceneManager.LoadScene(miniGameSceneName);
+        ControlPanelObjectiveUI.NotifyMiniGameStarted();
+        PlayerSceneTransition.LoadMiniGameScene(player);
     }
 
     private void OnDrawGizmosSelected()

@@ -20,5 +20,8 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/AudioTuningMiniGameScene.unity
     guid: 2f89f4ccf6504fe9a303af4f4eca6c10
+  - enabled: 1
+    path: Assets/Scenes/SuspectDialogueScene.unity
+    guid: e1a4c5d6f7b8901234567890abcdef12
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}

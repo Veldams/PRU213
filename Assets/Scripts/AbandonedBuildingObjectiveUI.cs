@@ -1,0 +1,467 @@
+using System.Collections;
+using UnityEngine;
+using UnityEngine.SceneManagement;
+using UnityEngine.UI;
+
+/// <summary>
+/// After the control-panel mini-game, guides the player to the abandoned building in SampleScene.
+/// Shows a brief hint when returning to the police office, then the full objective in SampleScene.
+/// </summary>
+public class AbandonedBuildingObjectiveUI : MonoBehaviour
+{
+    private const string SampleSceneName = "SampleScene";
+    private const string PoliceSceneName = "Police_Reception_Office_Day";
+    private const string TargetObjectName = "tripo_convert_cac2e472-cd38-4f25-9dce-93f90e2f91b1 1";
+
+    [SerializeField] private string objectiveTitle = "NHIỆM VỤ";
+    [SerializeField] private string objectiveMessage = "Đi tới tòa nhà bỏ hoang";
+    [SerializeField] private string worldMarkerLabel = "TÒA NHÀ BỎ HOANG";
+    [SerializeField] private float guideDisplayDuration = 3f;
+    [SerializeField] private float completeDistance = 12f;
+
+    private static AbandonedBuildingObjectiveUI activeInstance;
+
+    private bool isPoliceHintOnly;
+    private Transform target;
+    private Collider targetCollider;
+    private Transform player;
+    private CanvasGroup missionGroup;
+    private CanvasGroup guideGroup;
+    private GameObject guideCanvasGo;
+    private Text distanceText;
+    private RectTransform arrowRect;
+    private ObjectiveWorldMarker worldMarker;
+    private bool isMissionVisible;
+    private bool isCompleted;
+    private float nextHudRefresh;
+
+    public static void TryCreateForScene(Scene scene)
+    {
+        if (!PoliceReceptionGuideState.PendingAbandonedBuildingObjective)
+            return;
+
+        if (activeInstance != null)
+            return;
+
+        if (scene.name == PoliceSceneName)
+        {
+            if (PoliceReceptionGuideState.AbandonedBuildingPoliceHintShown)
+                return;
+
+            PoliceReceptionGuideState.AbandonedBuildingPoliceHintShown = true;
+
+            var root = new GameObject("AbandonedBuildingObjectiveUI");
+            var ui = root.AddComponent<AbandonedBuildingObjectiveUI>();
+            ui.isPoliceHintOnly = true;
+            return;
+        }
+
+        if (scene.name != SampleSceneName)
+            return;
+
+        var sampleRoot = new GameObject("AbandonedBuildingObjectiveUI");
+        sampleRoot.AddComponent<AbandonedBuildingObjectiveUI>();
+    }
+
+    public static void NotifyInvestigationStarted()
+    {
+        if (activeInstance != null)
+            activeInstance.HideForInvestigation();
+    }
+
+    private void HideForInvestigation()
+    {
+        if (isCompleted)
+            return;
+
+        isCompleted = true;
+        PoliceReceptionGuideState.PendingAbandonedBuildingObjective = false;
+        InteractionPromptUI.Hide();
+        StopAllCoroutines();
+        if (worldMarker != null)
+            Destroy(worldMarker.gameObject);
+        if (gameObject != null)
+            Destroy(gameObject);
+    }
+
+    private void Awake()
+    {
+        activeInstance = this;
+    }
+
+    private void OnDestroy()
+    {
+        if (activeInstance == this)
+            activeInstance = null;
+    }
+
+    private void Start()
+    {
+        if (isPoliceHintOnly)
+        {
+            BuildGuideUi(
+                "Ra ngoài công an qua cửa",
+                "Đi tới tòa nhà bỏ hoang");
+            StartCoroutine(RunPoliceHintSequence());
+            return;
+        }
+
+        BuildMissionUi();
+        BuildGuideUi(
+            "Đi tới tòa nhà bỏ hoang",
+            "Theo mũi tên và khoảng cách trên màn hình");
+        StartCoroutine(RunSampleObjectiveSequence());
+    }
+
+    private void Update()
+    {
+        if (isPoliceHintOnly || isCompleted || target == null || !isMissionVisible)
+            return;
+
+        ResolvePlayer();
+        if (player == null)
+            return;
+
+        if (HasReachedObjective())
+        {
+            CompleteObjective();
+            return;
+        }
+
+        if (Time.time < nextHudRefresh)
+            return;
+
+        nextHudRefresh = Time.time + 0.12f;
+        UpdateDistanceAndArrow();
+    }
+
+    private void CompleteObjective()
+    {
+        if (isCompleted)
+            return;
+
+        isCompleted = true;
+        PoliceReceptionGuideState.PendingAbandonedBuildingObjective = false;
+        AbandonedBuildingInvestigateSetup.EnsureOnBuilding(target != null ? target.gameObject : null);
+        StartCoroutine(HideMissionAndDestroy());
+    }
+
+    private void ResolvePlayer()
+    {
+        if (player != null)
+            return;
+
+        var movementTransform = PlayerSceneTransition.FindPlayerTransform();
+        if (movementTransform != null)
+            player = movementTransform;
+    }
+
+    private Vector3 GetObjectivePoint()
+    {
+        if (targetCollider != null)
+            return targetCollider.bounds.center;
+
+        return target != null ? target.position : Vector3.zero;
+    }
+
+    private bool HasReachedObjective()
+    {
+        if (player == null || target == null)
+            return false;
+
+        var cc = player.GetComponent<CharacterController>();
+        if (targetCollider != null && cc != null && targetCollider.bounds.Intersects(cc.bounds))
+            return true;
+
+        var flatPlayer = new Vector3(player.position.x, 0f, player.position.z);
+        var objective = GetObjectivePoint();
+        var flatObjective = new Vector3(objective.x, 0f, objective.z);
+        return Vector3.Distance(flatPlayer, flatObjective) <= completeDistance;
+    }
+
+    private static Font GetUiFont()
+    {
+        return Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+    }
+
+    private void BuildMissionUi()
+    {
+        var canvasGo = new GameObject("MissionCanvas");
+        canvasGo.transform.SetParent(transform, false);
+
+        var canvas = canvasGo.AddComponent<Canvas>();
+        canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+        canvas.sortingOrder = 85;
+
+        var scaler = canvasGo.AddComponent<CanvasScaler>();
+        scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+        scaler.referenceResolution = new Vector2(1920f, 1080f);
+        scaler.matchWidthOrHeight = 0.5f;
+
+        canvasGo.AddComponent<GraphicRaycaster>();
+
+        var panelGo = new GameObject("MissionPanel");
+        panelGo.transform.SetParent(canvasGo.transform, false);
+
+        var panelRect = panelGo.AddComponent<RectTransform>();
+        panelRect.anchorMin = new Vector2(0.5f, 1f);
+        panelRect.anchorMax = new Vector2(0.5f, 1f);
+        panelRect.pivot = new Vector2(0.5f, 1f);
+        panelRect.anchoredPosition = new Vector2(0f, -24f);
+        panelRect.sizeDelta = new Vector2(820f, 110f);
+
+        var panelImage = panelGo.AddComponent<Image>();
+        panelImage.color = new Color(0.05f, 0.10f, 0.18f, 0.88f);
+
+        missionGroup = panelGo.AddComponent<CanvasGroup>();
+        missionGroup.alpha = 0f;
+
+        var font = GetUiFont();
+
+        CreateLabel(panelGo.transform, "Title", font, 24, FontStyle.Bold,
+            new Vector2(-270f, -18f), new Vector2(220f, 30f), TextAnchor.MiddleLeft, objectiveTitle);
+
+        CreateLabel(panelGo.transform, "Message", font, 28, FontStyle.Normal,
+            new Vector2(20f, -18f), new Vector2(520f, 34f), TextAnchor.MiddleLeft, objectiveMessage);
+
+        distanceText = CreateLabel(panelGo.transform, "Distance", font, 22, FontStyle.Bold,
+            new Vector2(0f, -62f), new Vector2(760f, 28f), TextAnchor.MiddleCenter, string.Empty);
+
+        var arrowGo = new GameObject("DirectionArrow");
+        arrowGo.transform.SetParent(panelGo.transform, false);
+
+        arrowRect = arrowGo.AddComponent<RectTransform>();
+        arrowRect.anchorMin = new Vector2(0f, 0.5f);
+        arrowRect.anchorMax = new Vector2(0f, 0.5f);
+        arrowRect.pivot = new Vector2(0.5f, 0.5f);
+        arrowRect.anchoredPosition = new Vector2(34f, -18f);
+        arrowRect.sizeDelta = new Vector2(36f, 36f);
+
+        var arrowLabel = arrowGo.AddComponent<Text>();
+        arrowLabel.font = font;
+        arrowLabel.fontSize = 30;
+        arrowLabel.fontStyle = FontStyle.Bold;
+        arrowLabel.alignment = TextAnchor.MiddleCenter;
+        arrowLabel.color = new Color(1f, 0.86f, 0.35f);
+        arrowLabel.text = ">";
+    }
+
+    private void BuildGuideUi(string line1, string line2)
+    {
+        guideCanvasGo = new GameObject("GuideCanvas");
+        guideCanvasGo.transform.SetParent(transform, false);
+
+        var canvas = guideCanvasGo.AddComponent<Canvas>();
+        canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+        canvas.sortingOrder = 300;
+
+        var scaler = guideCanvasGo.AddComponent<CanvasScaler>();
+        scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+        scaler.referenceResolution = new Vector2(1920f, 1080f);
+        scaler.matchWidthOrHeight = 0.5f;
+
+        guideCanvasGo.AddComponent<GraphicRaycaster>();
+
+        var backdropGo = new GameObject("Backdrop");
+        backdropGo.transform.SetParent(guideCanvasGo.transform, false);
+
+        var backdropRect = backdropGo.AddComponent<RectTransform>();
+        backdropRect.anchorMin = Vector2.zero;
+        backdropRect.anchorMax = Vector2.one;
+        backdropRect.offsetMin = Vector2.zero;
+        backdropRect.offsetMax = Vector2.zero;
+
+        var backdropImage = backdropGo.AddComponent<Image>();
+        backdropImage.color = new Color(0f, 0f, 0f, 0.45f);
+        backdropImage.raycastTarget = false;
+
+        var panelGo = new GameObject("GuidePanel");
+        panelGo.transform.SetParent(guideCanvasGo.transform, false);
+
+        var panelRect = panelGo.AddComponent<RectTransform>();
+        panelRect.anchorMin = new Vector2(0.5f, 0.5f);
+        panelRect.anchorMax = new Vector2(0.5f, 0.5f);
+        panelRect.pivot = new Vector2(0.5f, 0.5f);
+        panelRect.anchoredPosition = Vector2.zero;
+        panelRect.sizeDelta = new Vector2(720f, 220f);
+
+        var panelImage = panelGo.AddComponent<Image>();
+        panelImage.color = new Color(0.06f, 0.08f, 0.12f, 0.94f);
+
+        guideGroup = panelGo.AddComponent<CanvasGroup>();
+        guideGroup.alpha = 0f;
+
+        var font = GetUiFont();
+
+        CreateLabel(panelGo.transform, "GuideTitle", font, 34, FontStyle.Bold,
+            new Vector2(0f, 52f), new Vector2(640f, 44f), TextAnchor.MiddleCenter, "HƯỚNG DẪN");
+
+        CreateLabel(panelGo.transform, "GuideLine1", font, 28, FontStyle.Normal,
+            new Vector2(0f, 0f), new Vector2(640f, 40f), TextAnchor.MiddleCenter, line1);
+
+        CreateLabel(panelGo.transform, "GuideLine2", font, 28, FontStyle.Normal,
+            new Vector2(0f, -46f), new Vector2(640f, 40f), TextAnchor.MiddleCenter, line2);
+    }
+
+    private static Text CreateLabel(Transform parent, string name, Font font, int size, FontStyle style,
+        Vector2 anchoredPos, Vector2 sizeDelta, TextAnchor anchor, string text)
+    {
+        var go = new GameObject(name);
+        go.transform.SetParent(parent, false);
+
+        var rect = go.AddComponent<RectTransform>();
+        rect.anchorMin = new Vector2(0.5f, 0.5f);
+        rect.anchorMax = new Vector2(0.5f, 0.5f);
+        rect.pivot = new Vector2(0.5f, 0.5f);
+        rect.anchoredPosition = anchoredPos;
+        rect.sizeDelta = sizeDelta;
+
+        var label = go.AddComponent<Text>();
+        label.font = font;
+        label.fontSize = size;
+        label.fontStyle = style;
+        label.alignment = anchor;
+        label.color = Color.white;
+        label.text = text;
+        return label;
+    }
+
+    private IEnumerator RunPoliceHintSequence()
+    {
+        yield return null;
+        yield return ShowGuideThenHide();
+        Destroy(gameObject);
+    }
+
+    private IEnumerator RunSampleObjectiveSequence()
+    {
+        yield return null;
+
+        yield return SceneObjectLocator.FindInSceneAsync(
+            SceneManager.GetActiveScene(),
+            TargetObjectName,
+            go =>
+            {
+                if (go == null)
+                    return;
+
+                target = go.transform;
+                targetCollider = go.GetComponent<Collider>();
+            });
+
+        if (target != null && worldMarker == null)
+            worldMarker = ObjectiveWorldMarker.Create(transform, GetObjectivePoint(), worldMarkerLabel);
+
+        AbandonedBuildingInvestigateSetup.EnsureOnBuilding(target != null ? target.gameObject : null);
+
+        yield return ShowGuideThenHide();
+
+        if (target == null)
+        {
+            Destroy(gameObject);
+            yield break;
+        }
+
+        yield return ShowMissionPanel();
+    }
+
+    private IEnumerator ShowMissionPanel()
+    {
+        const float fadeIn = 0.35f;
+        float elapsed = 0f;
+        while (elapsed < fadeIn)
+        {
+            elapsed += Time.deltaTime;
+            missionGroup.alpha = Mathf.Clamp01(elapsed / fadeIn);
+            yield return null;
+        }
+
+        missionGroup.alpha = 1f;
+        isMissionVisible = true;
+        UpdateDistanceAndArrow();
+    }
+
+    private IEnumerator ShowGuideThenHide()
+    {
+        if (guideGroup == null)
+            yield break;
+
+        const float fadeIn = 0.25f;
+        const float fadeOut = 0.35f;
+        float elapsed = 0f;
+
+        while (elapsed < fadeIn)
+        {
+            elapsed += Time.deltaTime;
+            guideGroup.alpha = Mathf.Clamp01(elapsed / fadeIn);
+            yield return null;
+        }
+
+        guideGroup.alpha = 1f;
+        yield return new WaitForSeconds(Mathf.Max(0f, guideDisplayDuration - fadeIn - fadeOut));
+
+        elapsed = 0f;
+        while (elapsed < fadeOut)
+        {
+            elapsed += Time.deltaTime;
+            guideGroup.alpha = 1f - Mathf.Clamp01(elapsed / fadeOut);
+            yield return null;
+        }
+
+        guideGroup.alpha = 0f;
+        if (guideCanvasGo != null)
+            Destroy(guideCanvasGo);
+    }
+
+    private IEnumerator HideMissionAndDestroy()
+    {
+        if (worldMarker != null)
+            Destroy(worldMarker.gameObject);
+
+        if (missionGroup == null)
+        {
+            Destroy(gameObject);
+            yield break;
+        }
+
+        const float fadeOut = 0.5f;
+        float elapsed = 0f;
+        while (elapsed < fadeOut)
+        {
+            elapsed += Time.deltaTime;
+            missionGroup.alpha = 1f - Mathf.Clamp01(elapsed / fadeOut);
+            yield return null;
+        }
+
+        Destroy(gameObject);
+    }
+
+    private void UpdateDistanceAndArrow()
+    {
+        if (player == null || target == null)
+            return;
+
+        var objective = GetObjectivePoint();
+        var flatPlayer = new Vector3(player.position.x, 0f, player.position.z);
+        var flatObjective = new Vector3(objective.x, 0f, objective.z);
+        float distance = Vector3.Distance(flatPlayer, flatObjective);
+
+        if (distanceText != null)
+            distanceText.text = "Khoảng cách: " + Mathf.RoundToInt(distance) + " m";
+
+        var cam = PlayerSceneTransition.GetActiveCamera();
+        if (cam == null || arrowRect == null)
+            return;
+
+        Vector3 toTarget = flatObjective - flatPlayer;
+        if (toTarget.sqrMagnitude < 0.01f)
+            return;
+
+        Vector3 camForward = cam.transform.forward;
+        camForward.y = 0f;
+        camForward.Normalize();
+
+        float angle = Vector3.SignedAngle(camForward, toTarget.normalized, Vector3.up);
+        arrowRect.localRotation = Quaternion.Euler(0f, 0f, -angle);
+    }
+}

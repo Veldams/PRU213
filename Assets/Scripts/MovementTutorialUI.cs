@@ -13,13 +13,17 @@ public class MovementTutorialUI : MonoBehaviour
 
     private CanvasGroup canvasGroup;
 
-    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
-    private static void BootstrapInSampleScene()
+    private static MovementTutorialUI activeInstance;
+
+    public static void TryCreateForScene(Scene scene)
     {
-        if (SceneManager.GetActiveScene().name != "SampleScene")
+        if (scene.name != "SampleScene")
             return;
 
-        if (FindFirstObjectByType<MovementTutorialUI>() != null)
+        if (SampleSceneGuideState.HasShownMovementTutorial)
+            return;
+
+        if (activeInstance != null)
             return;
 
         var root = new GameObject("MovementTutorialUI");
@@ -28,8 +32,15 @@ public class MovementTutorialUI : MonoBehaviour
 
     private void Awake()
     {
+        activeInstance = this;
         BuildUi();
         StartCoroutine(ShowThenHide());
+    }
+
+    private void OnDestroy()
+    {
+        if (activeInstance == this)
+            activeInstance = null;
     }
 
     private static Font GetUiFont()
@@ -138,6 +149,7 @@ public class MovementTutorialUI : MonoBehaviour
         }
 
         canvasGroup.alpha = 0f;
+        SampleSceneGuideState.HasShownMovementTutorial = true;
         Destroy(gameObject);
     }
 }

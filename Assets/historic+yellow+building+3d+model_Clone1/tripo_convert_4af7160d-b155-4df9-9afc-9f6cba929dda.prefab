@@ -52,6 +52,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: tripo_convert_4af7160d-b155-4df9-9afc-9f6cba929dda
       objectReference: {fileID: 0}
+    - target: {fileID: 2699092741681021261, guid: ec70e85150bad8c468f53adb868097bb, type: 3}
+      propertyPath: m_CookingOptions
+      value: 14
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []

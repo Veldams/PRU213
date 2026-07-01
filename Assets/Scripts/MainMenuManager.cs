@@ -65,7 +65,7 @@ public class MainMenuManager : MonoBehaviour
     // ── Main buttons ──────────────────────────────────────────────────────────
     public void StartGame()
     {
-        SceneManager.LoadScene("SampleScene");
+        SceneLoader.Load("SampleScene");
     }
 
     public void OpenSettings()

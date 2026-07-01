@@ -62,7 +62,7 @@ public static class PoliceOfficeBuilder
 
         // ==================== LIGHTING ====================
         // Xoa directional light mac dinh
-        Light[] existingLights = GameObject.FindObjectsOfType<Light>();
+        Light[] existingLights = Object.FindObjectsByType<Light>();
         foreach (var l in existingLights)
         {
             if (l.type == LightType.Directional)

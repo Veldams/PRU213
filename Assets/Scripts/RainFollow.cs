@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 /// <summary>
 /// Keeps a rain emitter hovering above a target (player or main camera) so the
@@ -58,13 +59,14 @@ public class RainFollow : MonoBehaviour
         if (target != null)
             return;
 
-        if (Camera.main != null)
+        var playerCam = PlayerSceneTransition.GetActiveCamera();
+        if (playerCam != null)
         {
-            target = Camera.main.transform;
+            target = playerCam.transform;
             return;
         }
 
-        var player = GameObject.Find("Unarmed Idle 01");
+        var player = SceneObjectLocator.FindInScene(SceneManager.GetActiveScene(), "Unarmed Idle 01", 3000);
         if (player != null)
             target = player.transform;
     }

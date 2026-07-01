@@ -68,6 +68,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: street+scene+3d+model
       objectReference: {fileID: 0}
+    - target: {fileID: 5239924417948701641, guid: 3100a070d9b06b148b3de884c596b520, type: 3}
+      propertyPath: m_CookingOptions
+      value: 14
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []

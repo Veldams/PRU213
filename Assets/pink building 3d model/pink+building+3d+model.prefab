@@ -92,6 +92,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: pink+building+3d+model
       objectReference: {fileID: 0}
+    - target: {fileID: 3888108993762902068, guid: 1d775cf1be37e984a857d52490e40043, type: 3}
+      propertyPath: m_CookingOptions
+      value: 14
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []

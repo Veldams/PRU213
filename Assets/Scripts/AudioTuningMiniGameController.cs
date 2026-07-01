@@ -1,7 +1,9 @@
+using System.Collections;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.SceneManagement;
 
+[DefaultExecutionOrder(-50)]
 public class AudioTuningMiniGameController : MonoBehaviour
 {
     [Header("Balance Targets")]
@@ -27,20 +29,58 @@ public class AudioTuningMiniGameController : MonoBehaviour
     private float tunedHoldTime;
     private bool completed;
 
+    private GUIStyle titleStyle;
+    private GUIStyle textStyle;
+    private GUIStyle keyStyle;
+
+    private void EnsureGuiStyles()
+    {
+        if (titleStyle != null)
+            return;
+
+        titleStyle = new GUIStyle(GUI.skin.label) { fontSize = 26, fontStyle = FontStyle.Bold };
+        textStyle = new GUIStyle(GUI.skin.label) { fontSize = 20 };
+        keyStyle = new GUIStyle(GUI.skin.label) { fontSize = 20, fontStyle = FontStyle.Bold };
+    }
+
     private void Start()
     {
+        StartCoroutine(BootstrapRoutine());
+    }
+
+    private IEnumerator BootstrapRoutine()
+    {
+        yield return null;
+
         SetupEnvironment();
         SetupAudio();
         PlayMix();
+    }
+
+    private Camera FindSceneCamera()
+    {
+        var scene = gameObject.scene;
+        var roots = scene.GetRootGameObjects();
+        for (int i = 0; i < roots.Length; i++)
+        {
+            var cam = roots[i].GetComponentInChildren<Camera>(true);
+            if (cam != null)
+                return cam;
+        }
+
+        return Camera.main;
     }
 
     private void SetupEnvironment()
     {
         Transform focus = BuildSimpleSet();
 
-        var cam = Camera.main;
+        var cam = FindSceneCamera();
         if (cam != null)
         {
+            cam.gameObject.SetActive(true);
+            cam.enabled = true;
+            cam.tag = "MainCamera";
             cam.transform.position = new Vector3(0f, 1.55f, -1.6f);
             if (focus != null)
                 cam.transform.LookAt(focus.position + new Vector3(0f, 0.1f, 0f));
@@ -49,18 +89,25 @@ public class AudioTuningMiniGameController : MonoBehaviour
             cam.backgroundColor = new Color(0.05f, 0.07f, 0.1f, 1f);
         }
 
-        EnsureSingleAudioListener();
+        EnsureSingleAudioListener(cam);
     }
 
-    private void EnsureSingleAudioListener()
+    private void EnsureSingleAudioListener(Camera sceneCamera)
     {
         AudioListener selected = null;
-        if (Camera.main != null)
-            selected = Camera.main.GetComponent<AudioListener>() ?? Camera.main.gameObject.AddComponent<AudioListener>();
+        if (sceneCamera != null)
+            selected = sceneCamera.GetComponent<AudioListener>() ?? sceneCamera.gameObject.AddComponent<AudioListener>();
 
-        var listeners = FindObjectsByType<AudioListener>(FindObjectsInactive.Include);
-        for (int i = 0; i < listeners.Length; i++)
-            listeners[i].enabled = listeners[i] == selected;
+        var playerRoot = PlayerSceneTransition.GetPlayerRoot();
+        if (playerRoot != null)
+        {
+            var playerListeners = playerRoot.GetComponentsInChildren<AudioListener>(true);
+            for (int i = 0; i < playerListeners.Length; i++)
+                playerListeners[i].enabled = false;
+        }
+
+        if (selected != null)
+            selected.enabled = true;
     }
 
     private static Transform BuildSimpleSet()
@@ -211,15 +258,17 @@ public class AudioTuningMiniGameController : MonoBehaviour
 
     private void ReturnToPreviousScene()
     {
-        var sceneName = AudioTuningRequest.ReturnSceneName;
-        if (string.IsNullOrWhiteSpace(sceneName))
-            sceneName = "Police_Reception_Office_Day";
+        if (completed && AudioTuningRequest.HasCompletedMiniGame)
+            PoliceReceptionGuideState.PendingAbandonedBuildingObjective = true;
 
-        SceneManager.LoadScene(sceneName);
+        var sceneName = AudioTuningRequest.ReturnSceneName;
+        PlayerSceneTransition.ReturnFromMiniGame(sceneName);
     }
 
     private void OnGUI()
     {
+        EnsureGuiStyles();
+
         const float panelW = 980f;
         const float panelH = 235f;
         var panel = new Rect((Screen.width - panelW) * 0.5f, Screen.height - panelH - 24f, panelW, panelH);
@@ -227,10 +276,6 @@ public class AudioTuningMiniGameController : MonoBehaviour
         GUI.color = new Color(0f, 0f, 0f, 0.76f);
         GUI.Box(panel, GUIContent.none);
         GUI.color = Color.white;
-
-        var titleStyle = new GUIStyle(GUI.skin.label) { fontSize = 26, fontStyle = FontStyle.Bold };
-        var textStyle = new GUIStyle(GUI.skin.label) { fontSize = 20 };
-        var keyStyle = new GUIStyle(GUI.skin.label) { fontSize = 20, fontStyle = FontStyle.Bold };
 
         GUI.Label(new Rect(panel.x + 20f, panel.y + 14f, 900f, 34f), "Khôi phục bản ghi âm", titleStyle);
         GUI.Label(new Rect(panel.x + 20f, panel.y + 52f, 940f, 28f), "A/D: chỉnh Voice Volume    J/L: chỉnh Noise Volume    SPACE: phát lại", textStyle);

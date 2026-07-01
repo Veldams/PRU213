@@ -24,9 +24,20 @@ public class VideoDialogueController : MonoBehaviour
     private bool isFinishing;
     private bool isPlaying;
 
+    private bool playbackStarted;
+    private bool prepareFailed;
+    private string statusMessage = string.Empty;
+    private bool pendingPrepared;
+    private bool pendingStarted;
+    private bool pendingFinished;
+    private bool pendingError;
+    private string pendingErrorMessage;
+
+    private GUIStyle skipLabelStyle;
+    private GUIStyle errorLabelStyle;
+
     private void Awake()
     {
-        dialogueClip = null;
         dialogueAudio = null;
 
         videoPlayer = GetComponent<VideoPlayer>();
@@ -73,24 +84,35 @@ public class VideoDialogueController : MonoBehaviour
         SilenceForeignAudio();
         EnsureSceneAudioListener();
 
-        string url = BuildVideoUrl(VideoDialogueRequest.GetVideoFileName(VideoDialogueRequest.CurrentPhase));
-        if (!string.IsNullOrEmpty(url))
-        {
-            videoPlayer.source = VideoSource.Url;
-            videoPlayer.url = url;
-            Debug.Log("[VideoDialogue] Phase=" + VideoDialogueRequest.CurrentPhase + " URL: " + url);
-        }
-        else if (dialogueClip != null)
+        string fileName = VideoDialogueRequest.GetVideoFileName(VideoDialogueRequest.CurrentPhase);
+        string resourcePath = VideoDialogueRequest.GetVideoResourcesPath(VideoDialogueRequest.CurrentPhase);
+        VideoClip clip = Resources.Load<VideoClip>(resourcePath);
+
+        if (clip == null && dialogueClip != null)
+            clip = dialogueClip;
+
+        if (clip != null)
         {
             videoPlayer.source = VideoSource.VideoClip;
-            videoPlayer.clip = dialogueClip;
-            Debug.Log("[VideoDialogue] Clip: " + dialogueClip.name);
+            videoPlayer.clip = clip;
+            Debug.Log("[VideoDialogue] Phase=" + VideoDialogueRequest.CurrentPhase + " Clip: " + clip.name);
         }
         else
         {
-            Debug.LogError("[VideoDialogue] Missing video file for phase " + VideoDialogueRequest.CurrentPhase);
-            ReturnToPreviousScene();
-            yield break;
+            string url = BuildVideoUrl(fileName);
+            if (!string.IsNullOrEmpty(url))
+            {
+                videoPlayer.source = VideoSource.Url;
+                videoPlayer.url = url;
+                Debug.Log("[VideoDialogue] Phase=" + VideoDialogueRequest.CurrentPhase + " URL: " + url);
+            }
+            else
+            {
+                Debug.LogError("[VideoDialogue] Missing video file for phase " + VideoDialogueRequest.CurrentPhase);
+                prepareFailed = true;
+                statusMessage = "Không tìm thấy video hội thoại. Nhấn E / ESC để quay lại.";
+                yield break;
+            }
         }
 
         ConfigureAudioBeforePrepare();
@@ -99,8 +121,8 @@ public class VideoDialogueController : MonoBehaviour
         videoPlayer.prepareCompleted += OnPrepared;
         videoPlayer.Prepare();
 
-        float timeout = 10f;
-        while (!videoPlayer.isPrepared && timeout > 0f)
+        float timeout = 30f;
+        while (!videoPlayer.isPrepared && timeout > 0f && !prepareFailed)
         {
             timeout -= Time.unscaledDeltaTime;
             yield return null;
@@ -109,7 +131,9 @@ public class VideoDialogueController : MonoBehaviour
         if (!videoPlayer.isPrepared)
         {
             Debug.LogError("[VideoDialogue] Prepare timeout.");
-            ReturnToPreviousScene();
+            prepareFailed = true;
+            statusMessage = "Không thể phát video. Nhấn E / ESC để quay lại.";
+            yield break;
         }
     }
 
@@ -117,13 +141,18 @@ public class VideoDialogueController : MonoBehaviour
     {
         string streamingPath = Path.Combine(Application.streamingAssetsPath, fileName);
         if (File.Exists(streamingPath))
-            return new System.Uri(streamingPath).AbsoluteUri;
+            return ToFileUrl(streamingPath);
 
         string assetPath = Path.Combine(Application.dataPath, "Video", fileName);
         if (File.Exists(assetPath))
-            return new System.Uri(assetPath).AbsoluteUri;
+            return ToFileUrl(assetPath);
 
         return null;
+    }
+
+    private static string ToFileUrl(string path)
+    {
+        return new System.Uri(Path.GetFullPath(path)).AbsoluteUri;
     }
 
     private void ConfigureMainCamera()
@@ -142,38 +171,44 @@ public class VideoDialogueController : MonoBehaviour
     private Camera FindSceneCamera()
     {
         var scene = gameObject.scene;
-        var cameras = FindObjectsByType<Camera>(FindObjectsSortMode.None);
-        for (int i = 0; i < cameras.Length; i++)
+        var roots = scene.GetRootGameObjects();
+        for (int i = 0; i < roots.Length; i++)
         {
-            var cam = cameras[i];
-            if (cam != null && cam.gameObject.scene == scene)
+            var cam = roots[i].GetComponentInChildren<Camera>(true);
+            if (cam != null)
                 return cam;
         }
 
-        return Camera.main;
+        return null;
     }
 
     private void SilenceForeignAudio()
     {
-        var sources = FindObjectsByType<AudioSource>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        var playerRoot = PlayerSceneTransition.GetPlayerRoot();
+        if (playerRoot == null)
+            return;
+
+        var sources = playerRoot.GetComponentsInChildren<AudioSource>(true);
         for (int i = 0; i < sources.Length; i++)
         {
             var source = sources[i];
             if (source == null || source == audioSource)
                 continue;
 
-            if (source.gameObject.scene.name == "DontDestroyOnLoad")
-            {
-                source.Pause();
-                source.volume = 0f;
-            }
+            source.Pause();
+            source.volume = 0f;
         }
     }
 
     private void EnsureSceneAudioListener()
     {
-        var scene = gameObject.scene;
-        var listeners = FindObjectsByType<AudioListener>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        var playerRoot = PlayerSceneTransition.GetPlayerRoot();
+        if (playerRoot != null)
+        {
+            var playerListeners = playerRoot.GetComponentsInChildren<AudioListener>(true);
+            for (int i = 0; i < playerListeners.Length; i++)
+                playerListeners[i].enabled = false;
+        }
 
         sceneListener = null;
         var sceneCamera = FindSceneCamera();
@@ -186,15 +221,6 @@ public class VideoDialogueController : MonoBehaviour
 
         if (sceneListener == null)
             sceneListener = gameObject.GetComponent<AudioListener>() ?? gameObject.AddComponent<AudioListener>();
-
-        for (int i = 0; i < listeners.Length; i++)
-        {
-            var listener = listeners[i];
-            if (listener == null)
-                continue;
-
-            listener.enabled = listener == sceneListener;
-        }
 
         sceneListener.enabled = true;
         AudioListener.pause = false;
@@ -247,12 +273,26 @@ public class VideoDialogueController : MonoBehaviour
 
     private void ConfigureAudioBeforePrepare()
     {
+        if (VideoDialogueRequest.UsesEmbeddedAudio(VideoDialogueRequest.CurrentPhase))
+        {
+            videoPlayer.controlledAudioTrackCount = 1;
+            videoPlayer.audioOutputMode = VideoAudioOutputMode.AudioSource;
+            videoPlayer.SetTargetAudioSource(0, audioSource);
+            return;
+        }
+
         videoPlayer.controlledAudioTrackCount = 0;
         videoPlayer.audioOutputMode = VideoAudioOutputMode.None;
     }
 
     private void PlayDialogueAudio()
     {
+        if (VideoDialogueRequest.UsesEmbeddedAudio(VideoDialogueRequest.CurrentPhase))
+        {
+            EnsureSceneAudioListener();
+            return;
+        }
+
         LoadDialogueAudio();
         EnsureSceneAudioListener();
 
@@ -301,54 +341,114 @@ public class VideoDialogueController : MonoBehaviour
             videoImage.texture = renderTexture;
     }
 
-    private void OnPrepared(VideoPlayer source)
+    private void Update()
     {
-        source.prepareCompleted -= OnPrepared;
+        ProcessPendingVideoEvents();
 
-        uint width = source.width > 0 ? source.width : 1280;
-        uint height = source.height > 0 ? source.height : 720;
-        EnsureRenderTexture((int)width, (int)height);
+        if (isFinishing || Keyboard.current == null)
+            return;
 
-        Debug.Log("[VideoDialogue] Prepared " + width + "x" + height + " len=" + source.length);
-        PlayDialogueAudio();
-        source.Play();
+        if (Keyboard.current.eKey.wasPressedThisFrame || Keyboard.current.escapeKey.wasPressedThisFrame)
+            ReturnToPreviousScene(playbackStarted);
     }
 
-    private void OnVideoStarted(VideoPlayer source)
+    private void ProcessPendingVideoEvents()
     {
+        if (pendingPrepared)
+        {
+            pendingPrepared = false;
+            HandlePrepared();
+        }
+
+        if (pendingStarted)
+        {
+            pendingStarted = false;
+            HandleStarted();
+        }
+
+        if (pendingError)
+        {
+            pendingError = false;
+            HandleVideoError(pendingErrorMessage);
+            pendingErrorMessage = string.Empty;
+        }
+
+        if (pendingFinished)
+        {
+            pendingFinished = false;
+            HandleVideoFinished();
+        }
+    }
+
+    private void HandlePrepared()
+    {
+        if (videoPlayer == null || isFinishing)
+            return;
+
+        videoPlayer.prepareCompleted -= OnPrepared;
+
+        uint width = videoPlayer.width > 0 ? videoPlayer.width : 1280;
+        uint height = videoPlayer.height > 0 ? videoPlayer.height : 720;
+        EnsureRenderTexture((int)width, (int)height);
+
+        Debug.Log("[VideoDialogue] Prepared " + width + "x" + height + " len=" + videoPlayer.length);
+        PlayDialogueAudio();
+        videoPlayer.Play();
+    }
+
+    private void HandleStarted()
+    {
+        if (isFinishing)
+            return;
+
+        playbackStarted = true;
         isPlaying = true;
 
         if (videoImage != null && renderTexture != null)
             videoImage.texture = renderTexture;
 
-        if (audioSource != null && dialogueAudio != null && !audioSource.isPlaying)
+        if (audioSource != null && dialogueAudio != null && !audioSource.isPlaying
+            && !VideoDialogueRequest.UsesEmbeddedAudio(VideoDialogueRequest.CurrentPhase))
             PlayDialogueAudio();
     }
 
-    private void Update()
-    {
-        if (isFinishing || Keyboard.current == null)
-            return;
-
-        if (Keyboard.current.eKey.wasPressedThisFrame || Keyboard.current.escapeKey.wasPressedThisFrame)
-            ReturnToPreviousScene();
-    }
-
-    private void OnVideoFinished(VideoPlayer source)
+    private void HandleVideoFinished()
     {
         if (!isPlaying)
             return;
 
-        ReturnToPreviousScene();
+        ReturnToPreviousScene(true);
+    }
+
+    private void HandleVideoError(string message)
+    {
+        Debug.LogError("[VideoDialogue] " + message);
+        prepareFailed = true;
+        statusMessage = "Lỗi phát video. Nhấn E / ESC để quay lại.";
+    }
+
+    private void OnPrepared(VideoPlayer source)
+    {
+        pendingPrepared = true;
+    }
+
+    private void OnVideoStarted(VideoPlayer source)
+    {
+        pendingStarted = true;
+    }
+
+    private void OnVideoFinished(VideoPlayer source)
+    {
+        pendingFinished = true;
     }
 
     private void OnVideoError(VideoPlayer source, string message)
     {
-        Debug.LogError("[VideoDialogue] " + message);
-        ReturnToPreviousScene();
+        pendingErrorMessage = message;
+        pendingError = true;
     }
 
-    private void ReturnToPreviousScene()
+    private void ReturnToPreviousScene(bool markDialogueComplete)
     {
         if (isFinishing)
             return;
@@ -356,7 +456,17 @@ public class VideoDialogueController : MonoBehaviour
         isFinishing = true;
         isPlaying = false;
 
-        VideoDialogueRequest.MarkPhaseComplete(VideoDialogueRequest.CurrentPhase);
+        var completedPhase = VideoDialogueRequest.CurrentPhase;
+        var chainSuspectDialogue = markDialogueComplete
+            && completedPhase == VideoDialogueRequest.DialoguePhase.Investigation;
+
+        if (markDialogueComplete)
+        {
+            VideoDialogueRequest.MarkPhaseComplete(completedPhase);
+
+            if (completedPhase == VideoDialogueRequest.DialoguePhase.FollowUp)
+                PoliceReceptionGuideState.ShowControlPanelObjectiveOnLoad = true;
+        }
 
         videoPlayer.loopPointReached -= OnVideoFinished;
         videoPlayer.errorReceived -= OnVideoError;
@@ -371,11 +481,18 @@ public class VideoDialogueController : MonoBehaviour
         if (canvas != null)
             Destroy(canvas);
 
+        if (chainSuspectDialogue)
+        {
+            ImageDialogueRequest.ReturnSceneName = VideoDialogueRequest.ReturnSceneName;
+            SceneLoader.Load(ImageDialogueRequest.SceneName);
+            return;
+        }
+
         var sceneName = VideoDialogueRequest.ReturnSceneName;
         if (string.IsNullOrWhiteSpace(sceneName))
             sceneName = "Police_Reception_Office_Day";
 
-        SceneManager.LoadScene(sceneName);
+        SceneLoader.Load(sceneName);
     }
 
     private void OnDestroy()
@@ -392,21 +509,46 @@ public class VideoDialogueController : MonoBehaviour
         if (isFinishing)
             return;
 
+        EnsureGuiStyles();
+
         const float width = 420f;
         const float height = 48f;
         var rect = new Rect((Screen.width - width) * 0.5f, Screen.height - 72f, width, height);
 
         GUI.color = new Color(0f, 0f, 0f, 0.65f);
         GUI.Box(rect, GUIContent.none);
+        GUI.Label(rect, skipPrompt, skipLabelStyle);
 
-        var style = new GUIStyle(GUI.skin.label)
+        if (!string.IsNullOrEmpty(statusMessage))
+        {
+            var errorRect = new Rect((Screen.width - 640f) * 0.5f, 72f, 640f, 40f);
+            GUI.color = new Color(0.6f, 0.1f, 0.1f, 0.85f);
+            GUI.Box(errorRect, GUIContent.none);
+            GUI.Label(errorRect, statusMessage, errorLabelStyle);
+        }
+
+        GUI.color = Color.white;
+    }
+
+    private void EnsureGuiStyles()
+    {
+        if (skipLabelStyle != null)
+            return;
+
+        skipLabelStyle = new GUIStyle(GUI.skin.label)
         {
             fontSize = 22,
             fontStyle = FontStyle.Bold,
             alignment = TextAnchor.MiddleCenter
         };
-        style.normal.textColor = Color.white;
-        GUI.Label(rect, skipPrompt, style);
-        GUI.color = Color.white;
+        skipLabelStyle.normal.textColor = Color.white;
+
+        errorLabelStyle = new GUIStyle(GUI.skin.label)
+        {
+            fontSize = 20,
+            fontStyle = FontStyle.Bold,
+            alignment = TextAnchor.MiddleCenter
+        };
+        errorLabelStyle.normal.textColor = Color.white;
     }
 }

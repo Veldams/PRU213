@@ -76,7 +76,7 @@ public static class CollisionProjectSetup
     static int AddMissingEnvironmentColliders(Scene scene)
     {
         int added = 0;
-        var meshFilters = Object.FindObjectsByType<MeshFilter>(FindObjectsSortMode.None);
+        var meshFilters = Object.FindObjectsByType<MeshFilter>();
         foreach (MeshFilter mf in meshFilters)
         {
             if (mf == null || mf.sharedMesh == null)
@@ -113,7 +113,7 @@ public static class CollisionProjectSetup
     static int HardenLargeMeshColliders(Scene scene)
     {
         int hardened = 0;
-        var meshColliders = Object.FindObjectsByType<MeshCollider>(FindObjectsSortMode.None);
+        var meshColliders = Object.FindObjectsByType<MeshCollider>();
         foreach (var mc in meshColliders)
         {
             if (mc == null || mc.sharedMesh == null)
@@ -134,22 +134,7 @@ public static class CollisionProjectSetup
 
     static bool HardenMeshColliderIfNeeded(MeshCollider mc)
     {
-        const int LargeTriangleThreshold = 2000000;
-        int triangleCount = mc.sharedMesh.triangles.Length / 3;
-        if (triangleCount < LargeTriangleThreshold)
-        {
-            return false;
-        }
-
-        MeshColliderCookingOptions current = mc.cookingOptions;
-        MeshColliderCookingOptions wanted = current & ~MeshColliderCookingOptions.UseFastMidphase;
-        if (current == wanted)
-        {
-            return false;
-        }
-
-        mc.cookingOptions = wanted;
-        return true;
+        return MeshColliderCookingFix.FixCollider(mc);
     }
 
     static bool ShouldSkipObject(GameObject go)

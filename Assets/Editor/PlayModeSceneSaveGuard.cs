@@ -12,12 +12,20 @@ public static class PlayModeSceneSaveGuard
 
     private static void OnPlayModeStateChanged(PlayModeStateChange state)
     {
-        if (state != PlayModeStateChange.ExitingEditMode) return;
+        if (state != PlayModeStateChange.ExitingEditMode)
+            return;
 
-        if (!EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo())
+        if (EditorApplication.isPlaying)
+            return;
+
+        try
         {
-            // User canceled save dialog -> cancel entering Play mode
-            EditorApplication.isPlaying = false;
+            if (!EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo())
+                EditorApplication.isPlaying = false;
+        }
+        catch (System.InvalidOperationException)
+        {
+            // Unity 6 may already be transitioning into Play mode here.
         }
     }
 }

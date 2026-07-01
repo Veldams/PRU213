@@ -30,6 +30,9 @@ public class ProceduralMovement : MonoBehaviour
         }
 
         characterController = GetComponent<CharacterController>();
+
+        if (GetComponent<FootstepAudio>() == null)
+            gameObject.AddComponent<FootstepAudio>();
     }
 
     void LateUpdate()

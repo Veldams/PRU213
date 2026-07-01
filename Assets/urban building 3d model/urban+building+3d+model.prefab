@@ -8,6 +8,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: -9162493854821533301, guid: 3a7180793e6c89a46bd54d21a857ae3f, type: 3}
+      propertyPath: m_CookingOptions
+      value: 14
+      objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 3a7180793e6c89a46bd54d21a857ae3f, type: 3}
       propertyPath: m_LocalScale.x
       value: 4.9838705

@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -7,10 +8,66 @@ public class PlayerSceneTransition : MonoBehaviour
 
     private static PlayerSceneTransition instance;
     private static GameObject playerRoot;
+
+    public static GameObject GetPlayerRoot() => playerRoot;
+
+    public static Transform FindPlayerTransform()
+    {
+        if (playerRoot != null)
+        {
+            var movement = playerRoot.GetComponentInChildren<RealMovement>(true);
+            return movement != null ? movement.transform : playerRoot.transform;
+        }
+
+        var named = SceneObjectLocator.FindInScene(SceneManager.GetActiveScene(), "Unarmed Idle 01", 3000);
+        if (named == null)
+            return null;
+
+        return named.transform.root != null ? named.transform.root : named.transform;
+    }
+
+    public static RealMovement FindPlayerMovement()
+    {
+        var playerTransform = FindPlayerTransform();
+        if (playerTransform == null)
+            return null;
+
+        return playerTransform.GetComponent<RealMovement>()
+            ?? playerTransform.GetComponentInChildren<RealMovement>(true);
+    }
     private static Vector3 savedScale = Vector3.one;
     private static Vector3 savedPosition;
     private static Quaternion savedRotation;
     private static bool restoreSavedTransform;
+    private static Camera cachedActiveCamera;
+
+    public static Camera GetActiveCamera()
+    {
+        if (cachedActiveCamera != null && cachedActiveCamera.isActiveAndEnabled)
+            return cachedActiveCamera;
+
+        if (playerRoot != null && playerRoot.activeInHierarchy)
+        {
+            cachedActiveCamera = playerRoot.GetComponentInChildren<Camera>(true);
+            if (cachedActiveCamera != null && cachedActiveCamera.enabled)
+                return cachedActiveCamera;
+        }
+
+        return null;
+    }
+
+    public static void CachePlayer(RealMovement movement)
+    {
+        if (movement == null)
+            return;
+
+        playerRoot = movement.transform.root.gameObject;
+    }
+
+    private static void InvalidateCameraCache()
+    {
+        cachedActiveCamera = null;
+    }
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     private static void Bootstrap()
@@ -40,14 +97,37 @@ public class PlayerSceneTransition : MonoBehaviour
         SceneManager.sceneLoaded += OnSceneLoaded;
     }
 
+    public static void LoadMiniGameScene(RealMovement player)
+    {
+        if (player == null)
+            return;
+
+        EnsureInstance();
+        PreservePlayer(player, true);
+        SceneLoader.Load(AudioTuningRequest.MiniGameSceneName);
+    }
+
+    public static void ReturnFromMiniGame(string sceneName)
+    {
+        if (string.IsNullOrWhiteSpace(sceneName))
+            sceneName = "Police_Reception_Office_Day";
+
+        SceneLoader.Load(sceneName);
+    }
+
     public static void LoadInteriorWithPlayer(RealMovement player, string sceneName)
     {
         if (player == null)
             return;
 
         EnsureInstance();
+        if (sceneName == "Police_Reception_Office_Day")
+        {
+            PoliceReceptionGuideState.ShowIntroOnLoad = true;
+            ObjectiveGuideUI.NotifyPoliceEntered();
+        }
         PreservePlayer(player, false);
-        SceneManager.LoadScene(sceneName);
+        SceneLoader.Load(sceneName);
     }
 
     public static void PreservePlayerForSceneChange(RealMovement player)
@@ -76,17 +156,33 @@ public class PlayerSceneTransition : MonoBehaviour
 
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
+        InvalidateCameraCache();
+
         if (playerRoot == null)
             return;
+
+        StartCoroutine(DeferredSceneSetup(scene));
+    }
+
+    private IEnumerator DeferredSceneSetup(Scene scene)
+    {
+        yield return null;
+
+        if (scene.name == "SampleScene")
+            yield return null;
+
+        if (playerRoot == null)
+            yield break;
 
         switch (scene.name)
         {
             case "VideoDialogueScene":
+            case ImageDialogueRequest.SceneName:
             case AudioTuningRequest.MiniGameSceneName:
-                playerRoot.SetActive(false);
-                DisablePlayerAudioListeners();
+                HidePlayerForOverlayScene();
                 break;
             case "Police_Reception_Office_Day":
+                RestorePlayerAfterOverlay();
                 if (restoreSavedTransform)
                     SetupReceptionOfficeAt(savedPosition, savedRotation);
                 else
@@ -94,8 +190,38 @@ public class PlayerSceneTransition : MonoBehaviour
                 restoreSavedTransform = false;
                 break;
             case "SampleScene":
-                SetupSampleScene();
+                RestorePlayerAfterOverlay();
+                if (restoreSavedTransform)
+                {
+                    playerRoot.transform.position = savedPosition;
+                    playerRoot.transform.rotation = savedRotation;
+                    playerRoot.transform.localScale = savedScale;
+                    restoreSavedTransform = false;
+                    EnablePlayerCamera();
+                }
+                else
+                {
+                    SetupSampleScene();
+                }
                 break;
+        }
+    }
+
+    private static void RestorePlayerAfterOverlay()
+    {
+        if (playerRoot == null)
+            return;
+
+        playerRoot.SetActive(true);
+
+        var sources = playerRoot.GetComponentsInChildren<AudioSource>(true);
+        for (int i = 0; i < sources.Length; i++)
+        {
+            if (sources[i] == null)
+                continue;
+
+            sources[i].volume = 1f;
+            sources[i].UnPause();
         }
     }
 
@@ -155,18 +281,19 @@ public class PlayerSceneTransition : MonoBehaviour
 
     private void SetupSampleScene()
     {
+        playerRoot.SetActive(true);
         playerRoot.transform.localScale = savedScale;
 
-        var entrance = FindAnyObjectByType<SceneEnterTrigger>();
-        if (entrance != null)
-            playerRoot.transform.position = entrance.transform.position + Vector3.back * 4f;
+        var spawn = SceneObjectLocator.FindInScene(SceneManager.GetActiveScene(), "SampleDoorSpawn");
+        if (spawn != null)
+            playerRoot.transform.position = spawn.transform.position;
 
         EnablePlayerCamera();
     }
 
     private static Transform FindDoorTransform()
     {
-        var door = GameObject.Find("Door");
+        var door = SceneObjectLocator.FindInScene(SceneManager.GetActiveScene(), "Door");
         return door != null ? door.transform : null;
     }
 
@@ -175,23 +302,44 @@ public class PlayerSceneTransition : MonoBehaviour
         var rig = GameObject.Find("MainCameraRig");
         if (rig != null)
             rig.SetActive(false);
-
-        foreach (var cam in FindObjectsByType<Camera>())
-        {
-            if (cam.transform.IsChildOf(playerRoot.transform))
-                continue;
-
-            if (cam.CompareTag("MainCamera"))
-                cam.gameObject.SetActive(false);
-        }
     }
 
     private void EnablePlayerCamera()
     {
+        if (playerRoot == null)
+            return;
+
+        Camera primary = null;
         foreach (var cam in playerRoot.GetComponentsInChildren<Camera>(true))
+        {
             cam.gameObject.SetActive(true);
+            cam.enabled = true;
+            if (primary == null)
+                primary = cam;
+        }
+
+        if (primary != null)
+        {
+            primary.tag = "MainCamera";
+            primary.depth = 0;
+            if (primary.clearFlags == CameraClearFlags.Nothing || primary.cullingMask == 0)
+            {
+                primary.clearFlags = CameraClearFlags.Skybox;
+                primary.cullingMask = ~0;
+            }
+            cachedActiveCamera = primary;
+        }
 
         EnablePlayerAudioListeners();
+    }
+
+    private static void HidePlayerForOverlayScene()
+    {
+        if (playerRoot == null)
+            return;
+
+        DisablePlayerAudioListeners();
+        playerRoot.SetActive(false);
     }
 
     private static void DisablePlayerAudioListeners()

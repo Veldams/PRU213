@@ -8,7 +8,7 @@ public class MainMenuController : MonoBehaviour
     {
         // Tải Scene tiếp theo trong danh sách Build Settings (thường là Scene có index 1)
         // Bạn nhớ Add Scene vào phần File -> Build Settings nhé
-        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex + 1);
+        SceneLoader.Load("SampleScene");
     }
 
     // Hàm này được gọi khi người chơi bấm nút "Cài đặt"

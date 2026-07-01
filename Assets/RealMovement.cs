@@ -9,7 +9,7 @@ public class RealMovement : MonoBehaviour
     public float animSmoothTime = 0.15f;
     public float gravity = -20f;
     [Header("Collider Alignment")]
-    public bool autoFitCharacterController = true;
+    public bool autoFitCharacterController = false;
     public float minControllerHeight = 1.2f;
 
     private Animator anim;
@@ -34,12 +34,18 @@ public class RealMovement : MonoBehaviour
 
     void Start()
     {
+        if (PlayerSceneTransition.GetPlayerRoot() == null)
+            PlayerSceneTransition.CachePlayer(this);
+
         anim = GetComponent<Animator>();
         if (anim != null)
             anim.applyRootMotion = false;
 
         if (autoFitCharacterController)
             FitControllerToVisual();
+
+        if (GetComponent<FootstepAudio>() == null)
+            gameObject.AddComponent<FootstepAudio>();
     }
 
     void Update()

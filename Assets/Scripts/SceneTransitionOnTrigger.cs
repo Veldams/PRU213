@@ -11,7 +11,7 @@ public class SceneTransitionOnTrigger : MonoBehaviour
     [SerializeField] private string spawnPointNameInTargetScene = "PlayerSpawn";
     [SerializeField] private bool debugLogs = false;
     [Tooltip("Time (sec) after a scene load during which incoming triggers in the new scene are ignored. Prevents instant re-trigger loops when the player spawns inside another trigger.")]
-    [SerializeField] private float armDelayAfterLoad = 1.5f;
+    [SerializeField] private float armDelayAfterLoad = 0.1f;
 
     /// <summary>
     /// Fallback spawn name used when the per-trigger spawn point can't be found in the target scene.
@@ -22,8 +22,6 @@ public class SceneTransitionOnTrigger : MonoBehaviour
     private static GameObject _pendingPlayer;
     private static string _pendingSpawnPointName;
     private static float _ignoreUntilTime;
-    private Collider _triggerCollider;
-    private bool _wasPlayerInside;
 
     private void Reset()
     {
@@ -34,43 +32,6 @@ public class SceneTransitionOnTrigger : MonoBehaviour
         }
 
         col.isTrigger = true;
-    }
-
-    private void Awake()
-    {
-        _triggerCollider = GetComponent<Collider>();
-    }
-
-    private void Update()
-    {
-        if (_hasTriggered && oneTimeOnly)
-            return;
-
-        if (!Application.isPlaying)
-            return;
-
-        var player = ResolvePlayerRoot();
-        if (player == null)
-        {
-            _wasPlayerInside = false;
-            return;
-        }
-
-        bool inside = IsPlayerInsideTrigger(player);
-
-        if (Time.time < _ignoreUntilTime)
-        {
-            // While cooling down (e.g. just spawned inside trigger), treat current state as baseline.
-            _wasPlayerInside = inside;
-            return;
-        }
-
-        if (inside && !_wasPlayerInside)
-        {
-            TryStartTransition(player);
-        }
-
-        _wasPlayerInside = inside;
     }
 
     private void OnTriggerEnter(Collider other)
@@ -122,57 +83,15 @@ public class SceneTransitionOnTrigger : MonoBehaviour
 
         _hasTriggered = true;
         _ignoreUntilTime = Time.time + Mathf.Max(0.1f, armDelayAfterLoad);
-        SceneManager.LoadScene(targetSceneName);
-    }
 
-    private GameObject ResolvePlayerRoot()
-    {
-        if (!string.IsNullOrWhiteSpace(playerObjectName))
+        if (targetSceneName == "Police_Reception_Office_Day"
+            && SceneManager.GetActiveScene().name == "SampleScene")
         {
-            var named = GameObject.Find(playerObjectName);
-            if (named != null)
-                return named.transform.root != null ? named.transform.root.gameObject : named;
+            PoliceReceptionGuideState.ShowIntroOnLoad = true;
+            ObjectiveGuideUI.NotifyPoliceEntered();
         }
 
-        var controllers = FindObjectsByType<CharacterController>(FindObjectsSortMode.None);
-        GameObject fallbackRoot = null;
-        for (int i = 0; i < controllers.Length; i++)
-        {
-            var cc = controllers[i];
-            if (cc == null || !cc.gameObject.activeInHierarchy)
-                continue;
-
-            var root = cc.transform.root != null ? cc.transform.root.gameObject : cc.gameObject;
-            if (root.CompareTag("Player"))
-                return root;
-
-            if (root.GetComponent("RealMovement") != null || root.GetComponent("ProceduralMovement") != null)
-                return root;
-
-            if (fallbackRoot == null)
-                fallbackRoot = root;
-        }
-
-        return fallbackRoot;
-    }
-
-    private bool IsPlayerInsideTrigger(GameObject playerRoot)
-    {
-        if (_triggerCollider == null)
-            _triggerCollider = GetComponent<Collider>();
-
-        if (_triggerCollider == null)
-            return false;
-
-        var cc = playerRoot.GetComponent<CharacterController>();
-        if (cc != null)
-            return _triggerCollider.bounds.Intersects(cc.bounds);
-
-        var col = playerRoot.GetComponentInChildren<Collider>();
-        if (col != null)
-            return _triggerCollider.bounds.Intersects(col.bounds);
-
-        return _triggerCollider.bounds.Contains(playerRoot.transform.position);
+        SceneLoader.Load(targetSceneName);
     }
 
     private bool IsPlayerCollider(Collider other)
@@ -207,8 +126,8 @@ public class SceneTransitionOnTrigger : MonoBehaviour
         SceneManager.sceneLoaded -= OnTargetSceneLoaded;
 
         // Extend cooldown so triggers in the freshly loaded scene don't fire immediately after spawn.
-        if (Time.time + 1f > _ignoreUntilTime)
-            _ignoreUntilTime = Time.time + 1f;
+        if (Time.time + 0.15f > _ignoreUntilTime)
+            _ignoreUntilTime = Time.time + 0.15f;
 
         if (_pendingPlayer == null)
             return;
@@ -263,19 +182,20 @@ public class SceneTransitionOnTrigger : MonoBehaviour
 
     private static Transform FindSpawnTransform(string spawnName)
     {
+        var scene = SceneManager.GetActiveScene();
+
         if (!string.IsNullOrWhiteSpace(spawnName))
         {
-            var named = GameObject.Find(spawnName);
+            var named = SceneObjectLocator.FindInScene(scene, spawnName, 500);
             if (named != null)
                 return named.transform;
         }
 
-        // Project-wide default fallback first.
-        var def = GameObject.Find(DefaultSpawnName);
+        var def = SceneObjectLocator.FindInScene(scene, DefaultSpawnName, 500);
         if (def != null)
             return def.transform;
 
-        var legacy = GameObject.Find("PlayerSpawn");
+        var legacy = SceneObjectLocator.FindInScene(scene, "PlayerSpawn", 500);
         return legacy != null ? legacy.transform : null;
     }
 
@@ -286,66 +206,12 @@ public class SceneTransitionOnTrigger : MonoBehaviour
     /// </summary>
     private static Vector3 FindSafeStandingPosition(Vector3 desired, GameObject playerRoot)
     {
-        float radius = 0.6f;
-        float height = 2.0f;
-
-        var cc = playerRoot != null ? playerRoot.GetComponent<CharacterController>() : null;
-        if (cc != null)
-        {
-            radius = Mathf.Max(0.3f, cc.radius * playerRoot.transform.lossyScale.x * 1.05f);
-            height = Mathf.Max(1.0f, cc.height * playerRoot.transform.lossyScale.y);
-        }
-
-        Transform playerTr = playerRoot != null ? playerRoot.transform : null;
-
-        if (IsClearStanding(desired, radius, height, playerTr))
-            return desired;
-
-        // Spiral outwards over a grid of candidate offsets.
-        const float step = 0.5f;
-        const float maxRange = 6.0f;
-        for (float r = step; r <= maxRange; r += step)
-        {
-            int rings = Mathf.Max(8, Mathf.CeilToInt(r * 6f));
-            for (int i = 0; i < rings; i++)
-            {
-                float a = (i / (float)rings) * Mathf.PI * 2f;
-                var candidate = desired + new Vector3(Mathf.Cos(a) * r, 0f, Mathf.Sin(a) * r);
-                if (IsClearStanding(candidate, radius, height, playerTr))
-                {
-                    return candidate;
-                }
-            }
-        }
-
-        // Last resort: just return the desired position; better than infinite loop.
+        // OverlapCapsule spiral search freezes Unity on SampleScene's dense mesh colliders.
         return desired;
     }
 
     private static bool IsClearStanding(Vector3 position, float radius, float height, Transform ignoreRoot)
     {
-        // Lift the capsule a touch so the bottom sphere does not graze the walking surface.
-        float bottomY = position.y + radius + 0.05f;
-        float topY = position.y + Mathf.Max(radius + 0.06f, height - radius);
-        var bottom = new Vector3(position.x, bottomY, position.z);
-        var top = new Vector3(position.x, topY, position.z);
-        var hits = Physics.OverlapCapsule(bottom, top, radius, ~0, QueryTriggerInteraction.Ignore);
-        if (hits == null || hits.Length == 0)
-            return true;
-
-        for (int i = 0; i < hits.Length; i++)
-        {
-            var h = hits[i];
-            if (h == null)
-                continue;
-            if (ignoreRoot != null && h.transform.root == ignoreRoot)
-                continue;
-            // Treat anything whose top is at or below the player's feet as walkable floor, not a blocker.
-            if (h.bounds.max.y <= position.y + 0.05f)
-                continue;
-            return false;
-        }
-
         return true;
     }
 }

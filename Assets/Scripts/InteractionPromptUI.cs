@@ -7,9 +7,14 @@ public class InteractionPromptUI : MonoBehaviour
 
     private CanvasGroup canvasGroup;
     private Text promptText;
+    private string currentMessage;
+    private bool isVisible;
 
     public static void Show(string message)
     {
+        if (string.IsNullOrEmpty(message))
+            return;
+
         GetOrCreate().SetPrompt(message, true);
     }
 
@@ -26,14 +31,8 @@ public class InteractionPromptUI : MonoBehaviour
         if (instance != null)
             return instance;
 
-        var existing = FindFirstObjectByType<InteractionPromptUI>();
-        if (existing != null)
-        {
-            instance = existing;
-            return instance;
-        }
-
         var root = new GameObject("InteractionPromptUI");
+        DontDestroyOnLoad(root);
         instance = root.AddComponent<InteractionPromptUI>();
         instance.BuildUi();
         return instance;
@@ -48,13 +47,10 @@ public class InteractionPromptUI : MonoBehaviour
         canvas.renderMode = RenderMode.ScreenSpaceOverlay;
         canvas.sortingOrder = 100;
 
-        canvasGo.AddComponent<CanvasScaler>().uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
-
-        var scaler = canvasGo.GetComponent<CanvasScaler>();
+        var scaler = canvasGo.AddComponent<CanvasScaler>();
+        scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
         scaler.referenceResolution = new Vector2(1920f, 1080f);
         scaler.matchWidthOrHeight = 0.5f;
-
-        canvasGo.AddComponent<GraphicRaycaster>();
 
         var panelGo = new GameObject("PromptPanel");
         panelGo.transform.SetParent(canvasGo.transform, false);
@@ -97,7 +93,12 @@ public class InteractionPromptUI : MonoBehaviour
         if (promptText == null)
             BuildUi();
 
-        promptText.text = message;
+        if (visible && message == currentMessage && isVisible)
+            return;
+
+        currentMessage = visible ? message : string.Empty;
+        isVisible = visible;
+        promptText.text = visible ? message : string.Empty;
         canvasGroup.alpha = visible ? 1f : 0f;
     }
 

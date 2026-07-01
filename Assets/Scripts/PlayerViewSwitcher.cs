@@ -20,9 +20,11 @@ public class PlayerViewSwitcher : MonoBehaviour
     [Header("Third Person Collision")]
     [SerializeField] private float cameraCollisionRadius = 0.2f;
     [SerializeField] private float minDistanceWhenBlocked = 1.6f;
-    [SerializeField] private LayerMask collisionMask = ~0;
+    [SerializeField] private LayerMask collisionMask = Physics.DefaultRaycastLayers;
 
     private bool _isFirstPerson;
+    private int _sphereCastFrameSkip;
+    private float _cachedFinalDistance = -1f;
 
     private void Awake()
     {
@@ -64,10 +66,21 @@ public class PlayerViewSwitcher : MonoBehaviour
         var finalDistance = maxDist;
         var isBlocked = false;
 
-        if (Physics.SphereCast(focus, cameraCollisionRadius, direction, out var hit, maxDist, collisionMask, QueryTriggerInteraction.Ignore))
+        if ((_sphereCastFrameSkip++ & 1) == 0)
         {
-            isBlocked = true;
-            finalDistance = Mathf.Max(minDistanceWhenBlocked, hit.distance - cameraCollisionRadius);
+            finalDistance = maxDist;
+            if (Physics.SphereCast(focus, cameraCollisionRadius, direction, out var hit, maxDist, collisionMask, QueryTriggerInteraction.Ignore))
+            {
+                isBlocked = true;
+                finalDistance = Mathf.Max(minDistanceWhenBlocked, hit.distance - cameraCollisionRadius);
+            }
+
+            _cachedFinalDistance = finalDistance;
+        }
+        else if (_cachedFinalDistance >= 0f)
+        {
+            finalDistance = _cachedFinalDistance;
+            isBlocked = finalDistance < maxDist - 0.05f;
         }
 
         var finalPos = focus + direction * finalDistance;
