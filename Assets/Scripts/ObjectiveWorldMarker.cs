@@ -68,6 +68,7 @@ public class ObjectiveWorldMarker : MonoBehaviour
         if (toCam.sqrMagnitude < 0.01f)
             return;
 
-        transform.rotation = Quaternion.LookRotation(toCam.normalized, Vector3.up);
+        // World-space UI faces -Z; rotate so the label reads toward the camera.
+        transform.rotation = Quaternion.LookRotation(-toCam.normalized, Vector3.up);
     }
 }
