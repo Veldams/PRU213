@@ -1,17 +1,16 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
-using UnityEngine.SceneManagement;
 
 /// <summary>
-/// At the abandoned building: E to start the investigation (VTV) video.
+/// E-key entrance at the police building on SampleScene (ground-level, uses mesh bounds).
 /// </summary>
-public class AbandonedBuildingInvestigateTrigger : MonoBehaviour
+public class PoliceStationEntranceTrigger : MonoBehaviour
 {
-    public const string BuildingObjectName = "tripo_convert_cac2e472-cd38-4f25-9dce-93f90e2f91b1 1";
+    public const string BuildingObjectName = "tripo_convert_4af7160d-b155-4df9-9afc-9f6cba929dda";
 
-    [SerializeField] private string promptMessage = "E: Tiến hành truy quét";
-    [SerializeField] private float interactionRadius = 20f;
-    [SerializeField] private string chatSceneName = VideoDialogueRequest.ChatSceneName;
+    [SerializeField] private string targetSceneName = "Police_Reception_Office_Day";
+    [SerializeField] private string promptMessage = "E: Vào trụ sở công an";
+    [SerializeField] private float interactionRadius = 28f;
 
     private RealMovement player;
     private Collider buildingCollider;
@@ -27,7 +26,7 @@ public class AbandonedBuildingInvestigateTrigger : MonoBehaviour
 
     private void Update()
     {
-        if (!VideoDialogueRequest.CanStartInvestigation)
+        if (SampleSceneGuideState.PoliceObjectiveCompleted)
         {
             if (playerInRange)
             {
@@ -48,7 +47,7 @@ public class AbandonedBuildingInvestigateTrigger : MonoBehaviour
             return;
 
         if (Keyboard.current.eKey.wasPressedThisFrame)
-            StartInvestigation();
+            EnterPoliceStation();
     }
 
     private void UpdateProximityState()
@@ -87,26 +86,22 @@ public class AbandonedBuildingInvestigateTrigger : MonoBehaviour
         return Vector3.Distance(flatSelf, flatPlayerPos) <= interactionRadius;
     }
 
-    private void StartInvestigation()
+    private void EnterPoliceStation()
     {
         InteractionPromptUI.Hide();
 
-        if (!Application.CanStreamedLevelBeLoaded(chatSceneName))
+        if (!Application.CanStreamedLevelBeLoaded(targetSceneName))
         {
-            Debug.LogError("[AbandonedBuildingInvestigateTrigger] Scene not in Build Settings: " + chatSceneName);
+            Debug.LogError("[PoliceStationEntranceTrigger] Scene not in Build Settings: " + targetSceneName);
             return;
         }
 
-        VideoDialogueRequest.CurrentPhase = VideoDialogueRequest.DialoguePhase.Investigation;
-        VideoDialogueRequest.ReturnSceneName = SceneManager.GetActiveScene().name;
-        AbandonedBuildingObjectiveUI.NotifyInvestigationStarted();
-        PlayerSceneTransition.PreservePlayerForSceneChange(player);
-        SceneLoader.Load(chatSceneName);
+        PlayerSceneTransition.LoadInteriorWithPlayer(player, targetSceneName);
     }
 
     private void OnDrawGizmosSelected()
     {
-        Gizmos.color = new Color(0.9f, 0.35f, 0.1f, 0.85f);
+        Gizmos.color = new Color(0.2f, 0.55f, 1f, 0.85f);
         var center = buildingCollider != null ? buildingCollider.bounds.center : transform.position;
         Gizmos.DrawWireSphere(new Vector3(center.x, transform.position.y, center.z), interactionRadius);
     }

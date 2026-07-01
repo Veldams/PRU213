@@ -1,13 +1,11 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
-using UnityEngine.SceneManagement;
 
 public class NpcTalkTrigger : MonoBehaviour
 {
     [SerializeField] private string firstPromptMessage = "E: Trò chuyện";
     [SerializeField] private string followUpPromptMessage = "E: Trò chuyện tiếp";
     [SerializeField] private float interactionRadius = 2.5f;
-    [SerializeField] private string videoSceneName = VideoDialogueRequest.VideoSceneName;
 
     private RealMovement player;
     private bool playerInRange;
@@ -16,6 +14,9 @@ public class NpcTalkTrigger : MonoBehaviour
 
     private void Update()
     {
+        if (ChatDialogueController.IsActive)
+            return;
+
         if (player == null)
             player = PlayerSceneTransition.FindPlayerMovement();
 
@@ -62,28 +63,21 @@ public class NpcTalkTrigger : MonoBehaviour
     {
         InteractionPromptUI.Hide();
 
-        if (string.IsNullOrWhiteSpace(videoSceneName))
+        if (player == null)
+            player = PlayerSceneTransition.FindPlayerMovement();
+
+        if (VideoDialogueRequest.CanStartFirstDialogue)
         {
-            Debug.LogWarning("[NpcTalkTrigger] Video scene name is empty.");
-            return;
-        }
-
-        if (!Application.CanStreamedLevelBeLoaded(videoSceneName))
-        {
-            Debug.LogError("[NpcTalkTrigger] Scene not in Build Settings: " + videoSceneName);
-            return;
-        }
-
-        VideoDialogueRequest.CurrentPhase = VideoDialogueRequest.CanStartFirstDialogue
-            ? VideoDialogueRequest.DialoguePhase.First
-            : VideoDialogueRequest.DialoguePhase.FollowUp;
-
-        if (VideoDialogueRequest.CurrentPhase == VideoDialogueRequest.DialoguePhase.First)
             PoliceReceptionObjectiveUI.NotifyCaptainTalkStarted();
-
-        VideoDialogueRequest.ReturnSceneName = SceneManager.GetActiveScene().name;
-        PlayerSceneTransition.PreservePlayerForSceneChange(player);
-        SceneLoader.Load(videoSceneName);
+            ChatDialogueController.StartInScene(
+                VideoDialogueRequest.DialoguePhase.First,
+                player,
+                chainPoliceFollowUp: true);
+        }
+        else if (VideoDialogueRequest.CanStartFollowUpDialogue)
+        {
+            ChatDialogueController.StartInScene(VideoDialogueRequest.DialoguePhase.FollowUp, player);
+        }
     }
 
     private void OnDrawGizmosSelected()

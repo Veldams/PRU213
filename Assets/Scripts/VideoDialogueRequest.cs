@@ -1,6 +1,7 @@
 public static class VideoDialogueRequest
 {
     public const string VideoSceneName = "VideoDialogueScene";
+    public const string ChatSceneName = "ChatDialogueScene";
 
     public static string ReturnSceneName = "Police_Reception_Office_Day";
 
@@ -23,6 +24,18 @@ public static class VideoDialogueRequest
 
     public static bool CanStartInvestigation =>
         AudioTuningRequest.HasCompletedMiniGame && !HasWatchedInvestigationVideo;
+
+    public static bool UsesChatDialogue(DialoguePhase phase)
+    {
+        return phase == DialoguePhase.First
+            || phase == DialoguePhase.FollowUp
+            || phase == DialoguePhase.Investigation;
+    }
+
+    public static bool UsesInSceneChatDialogue(DialoguePhase phase)
+    {
+        return phase == DialoguePhase.First || phase == DialoguePhase.FollowUp;
+    }
 
     public static bool UsesEmbeddedAudio(DialoguePhase phase)
     {

@@ -76,6 +76,7 @@ public class SceneTransitionOnTrigger : MonoBehaviour
         {
             _pendingPlayer = playerRoot;
             _pendingSpawnPointName = spawnPointNameInTargetScene;
+            PlayerSceneTransition.CachePlayer(playerRoot.GetComponentInChildren<RealMovement>(true));
             DontDestroyOnLoad(_pendingPlayer);
             SceneManager.sceneLoaded -= OnTargetSceneLoaded;
             SceneManager.sceneLoaded += OnTargetSceneLoaded;
@@ -90,6 +91,9 @@ public class SceneTransitionOnTrigger : MonoBehaviour
             PoliceReceptionGuideState.ShowIntroOnLoad = true;
             ObjectiveGuideUI.NotifyPoliceEntered();
         }
+
+        if (targetSceneName == "SampleScene")
+            PlayerSceneTransition.PrepareOutdoorReturn();
 
         SceneLoader.Load(targetSceneName);
     }
@@ -113,8 +117,12 @@ public class SceneTransitionOnTrigger : MonoBehaviour
             return true;
 
         // Fallback for this project: player root usually has CharacterController + movement script.
-        var hasController = root.GetComponent<CharacterController>() != null;
-        var hasMovement = root.GetComponent("RealMovement") != null || root.GetComponent("ProceduralMovement") != null;
+        var hasController = root.GetComponent<CharacterController>() != null
+            || root.GetComponentInChildren<CharacterController>(true) != null;
+        var hasMovement = root.GetComponent<RealMovement>() != null
+            || root.GetComponentInChildren<RealMovement>(true) != null
+            || root.GetComponent<ProceduralMovement>() != null
+            || root.GetComponentInChildren<ProceduralMovement>(true) != null;
         if (hasController && hasMovement)
             return true;
 
@@ -155,6 +163,9 @@ public class SceneTransitionOnTrigger : MonoBehaviour
             var safePos = FindSafeStandingPosition(spawn.position, _pendingPlayer);
             _pendingPlayer.transform.SetPositionAndRotation(safePos, spawn.rotation);
         }
+
+        if (scene.name == "SampleScene")
+            _pendingPlayer.transform.localScale = Vector3.one;
 
         if (controller != null)
             controller.enabled = true;

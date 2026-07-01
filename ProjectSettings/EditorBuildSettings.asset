@@ -18,6 +18,9 @@ EditorBuildSettings:
     path: Assets/Scenes/VideoDialogueScene.unity
     guid: dcd84c87033afed46a70447621b42b37
   - enabled: 1
+    path: Assets/Scenes/ChatDialogueScene.unity
+    guid: f3a8b9c0d1e23456e7890123456789ab
+  - enabled: 1
     path: Assets/Scenes/AudioTuningMiniGameScene.unity
     guid: 2f89f4ccf6504fe9a303af4f4eca6c10
   - enabled: 1

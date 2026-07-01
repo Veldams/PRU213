@@ -139,6 +139,12 @@ public class PlayerSceneTransition : MonoBehaviour
         PreservePlayer(player, true);
     }
 
+    public static void PrepareOutdoorReturn()
+    {
+        savedScale = Vector3.one;
+        restoreSavedTransform = false;
+    }
+
     static void PreservePlayer(RealMovement player, bool rememberTransform)
     {
         playerRoot = player.transform.root.gameObject;
@@ -177,6 +183,7 @@ public class PlayerSceneTransition : MonoBehaviour
         switch (scene.name)
         {
             case "VideoDialogueScene":
+            case VideoDialogueRequest.ChatSceneName:
             case ImageDialogueRequest.SceneName:
             case AudioTuningRequest.MiniGameSceneName:
                 HidePlayerForOverlayScene();
@@ -191,11 +198,12 @@ public class PlayerSceneTransition : MonoBehaviour
                 break;
             case "SampleScene":
                 RestorePlayerAfterOverlay();
+                PrepareOutdoorReturn();
                 if (restoreSavedTransform)
                 {
                     playerRoot.transform.position = savedPosition;
                     playerRoot.transform.rotation = savedRotation;
-                    playerRoot.transform.localScale = savedScale;
+                    playerRoot.transform.localScale = Vector3.one;
                     restoreSavedTransform = false;
                     EnablePlayerCamera();
                 }
@@ -281,13 +289,29 @@ public class PlayerSceneTransition : MonoBehaviour
 
     private void SetupSampleScene()
     {
+        DestroyDuplicatePlayers();
+
         playerRoot.SetActive(true);
+
+        var movement = playerRoot.GetComponentInChildren<RealMovement>(true);
+        var controller = movement != null ? movement.GetComponent<CharacterController>() : null;
+        if (controller != null)
+            controller.enabled = false;
+
+        savedScale = Vector3.one;
         playerRoot.transform.localScale = savedScale;
 
-        var spawn = SceneObjectLocator.FindInScene(SceneManager.GetActiveScene(), "SampleDoorSpawn");
+        var spawn = SceneObjectLocator.FindInScene(SceneManager.GetActiveScene(), "SampleDoorSpawn", 500);
         if (spawn != null)
+        {
             playerRoot.transform.position = spawn.transform.position;
+            playerRoot.transform.rotation = spawn.transform.rotation;
+        }
 
+        if (controller != null)
+            controller.enabled = true;
+
+        restoreSavedTransform = false;
         EnablePlayerCamera();
     }
 

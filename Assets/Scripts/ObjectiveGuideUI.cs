@@ -18,7 +18,8 @@ public class ObjectiveGuideUI : MonoBehaviour
     [SerializeField] private float showDelay = 8.5f;
     [SerializeField] private float fadeInDuration = 0.4f;
     [SerializeField] private float fadeOutDuration = 0.6f;
-    [SerializeField] private float completeDistance = 6f;
+    [SerializeField] private string nearObjectiveMessage = "Đã đến công sở! Nhấn E để vào.";
+    [SerializeField] private float completeDistance = 28f;
 
     private static ObjectiveGuideUI activeInstance;
 
@@ -111,7 +112,6 @@ public class ObjectiveGuideUI : MonoBehaviour
         if (HasReachedObjective())
         {
             isCompleted = true;
-            SampleSceneGuideState.PoliceObjectiveCompleted = true;
             StartCoroutine(HideAndDestroy());
             return;
         }
@@ -292,7 +292,7 @@ public class ObjectiveGuideUI : MonoBehaviour
         }
 
         if (messageText != null)
-            messageText.text = "Đã đến công sở công an!";
+            messageText.text = nearObjectiveMessage;
 
         if (distanceText != null)
             distanceText.text = string.Empty;

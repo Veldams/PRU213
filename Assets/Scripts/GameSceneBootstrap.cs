@@ -55,8 +55,9 @@ public static class GameSceneBootstrap
 
             yield return null;
 
-            if (scene.name == SampleScenePreloader.SceneName)
+            if (scene.name == SampleScenePreloader.SceneName || scene.name == "SampleScene")
             {
+                yield return null;
                 yield return null;
                 yield return null;
             }
@@ -66,6 +67,7 @@ public static class GameSceneBootstrap
             MovementTutorialUI.TryCreateForScene(scene);
             AbandonedBuildingObjectiveUI.TryCreateForScene(scene);
             ObjectiveGuideUI.TryCreateForScene(scene);
+            yield return PoliceStationEntranceSetup.TrySetupForScene(scene);
             yield return AbandonedBuildingInvestigateSetup.TrySetupForScene(scene);
         }
     }
